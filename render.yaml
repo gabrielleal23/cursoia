@@ -1,0 +1,29 @@
+# Render Blueprint: crea la app web + la base PostgreSQL y las conecta.
+# Planes de pago a propósito: el plan gratis duerme el servicio tras 15 min sin tráfico
+# (la primera persona esperaría ~1 min) y su Postgres expira a los 30 días.
+databases:
+  - name: ruta-ia-db
+    plan: basic-256mb
+    region: virginia
+
+services:
+  - type: web
+    name: ruta-ia
+    runtime: python
+    plan: starter
+    region: virginia            # misma región que la base de datos
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2 --proxy-headers --forwarded-allow-ips='*'
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.3"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ruta-ia-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true     # Render genera una clave aleatoria
+      - key: ADMIN_PASSWORD
+        sync: false             # Render te la pedirá al crear el Blueprint

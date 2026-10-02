@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ruta de IA para desarrolladores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF3F2; --surface:#FFFFFF; --ink:#12263A; --muted:#4E606C; --line:#CDD9D7;
+  --brand:#0E6E6E; --brand-ink:#FFFFFF; --accent:#F0A202; --accent-ink:#2A1D00;
+  --ok:#1B7F4B; --ok-bg:#E1F3E9; --bad:#B4321F; --bad-bg:#FBE7E3; --tint:#DDEBE9;
+  --code-bg:#F6F9F8;
+  --font-head:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --font-body:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1B1E; --surface:#14282C; --ink:#E6F0EE; --muted:#A3B8B5; --line:#284A4F;
+    --brand:#4CC2B5; --brand-ink:#062123; --accent:#F5B83D; --accent-ink:#241900;
+    --ok:#5ED49A; --ok-bg:#153A2A; --bad:#FF9585; --bad-bg:#43201B; --tint:#17363A; --code-bg:#0F2124;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1B1E; --surface:#14282C; --ink:#E6F0EE; --muted:#A3B8B5; --line:#284A4F;
+  --brand:#4CC2B5; --brand-ink:#062123; --accent:#F5B83D; --accent-ink:#241900;
+  --ok:#5ED49A; --ok-bg:#153A2A; --bad:#FF9585; --bad-bg:#43201B; --tint:#17363A; --code-bg:#0F2124;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 70px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.6}
+h1,h2,h3{font-family:var(--font-head);line-height:1.15;margin:0 0 .5em;letter-spacing:-.01em}
+h1{font-size:clamp(1.9rem,4.5vw,2.8rem);font-weight:800}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0 0 1em;max-width:68ch}
+button{font:inherit;color:inherit;cursor:pointer}
+code{font-family:var(--mono);font-size:.9em;background:var(--tint);padding:1px 6px;border-radius:5px}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:16px;padding:10px 20px}
+.brand{font-family:var(--font-head);font-weight:800;font-size:1.05rem;white-space:nowrap}
+.meter{flex:1;display:flex;align-items:center;gap:10px;min-width:0}
+.meter .bar{flex:1;height:10px;background:var(--tint);border-radius:99px;overflow:hidden}
+.meter .fill{height:100%;background:var(--brand);border-radius:99px;transition:width .4s}
+.meter span{font-size:.9rem;color:var(--muted);white-space:nowrap}
+.toggle{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:.9rem}
+.toggle[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+.app{display:grid;grid-template-columns:290px minmax(0,1fr);gap:32px;max-width:1180px;margin:0 auto;padding:24px 20px 60px}
+.route{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);align-self:start;list-style:none;margin:0;padding:0}
+.route li{position:relative}
+.route li:not(:last-child)::before{content:"";position:absolute;left:15px;top:34px;bottom:-8px;width:3px;background:var(--line);border-radius:2px}
+.route li.done:not(:last-child)::before{background:var(--brand)}
+.stop{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;padding:6px 6px 6px 0;border-radius:10px;margin-bottom:8px}
+.stop:hover .label{text-decoration:underline}
+.node{flex:none;width:34px;height:34px;border-radius:50%;background:var(--surface);border:3px solid var(--line);display:grid;place-items:center;font-family:var(--font-head);font-weight:700;font-size:.9rem;position:relative;z-index:1}
+.done .node{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.active .node{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 30%,transparent)}
+.label{display:block;font-weight:700;line-height:1.25}
+.time{display:block;font-size:.85rem;color:var(--muted)}
+.active .label{color:var(--brand)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:clamp(20px,4vw,40px)}
+.kicker{color:var(--muted);font-size:.95rem;margin-bottom:6px}
+.lead{font-size:1.1rem}
+.block{margin-top:34px}
+.block>h3{margin-bottom:.3em}
+.hint{color:var(--muted);font-size:.95rem}
+
+.btn{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--brand);background:var(--brand);color:var(--brand-ink);font-weight:700;border-radius:12px;padding:10px 18px}
+.btn.ghost{background:transparent;color:var(--brand)}
+.btn.small{padding:5px 12px;font-size:.9rem;border-radius:9px}
+.btn:disabled{opacity:.4;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+.facil{margin:0 0 26px;background:color-mix(in srgb,var(--accent) 22%,var(--surface));border-left:6px solid var(--accent);border-radius:10px;padding:12px 16px}
+.facil strong{font-family:var(--font-head)}
+.facil p{margin:.3em 0 0}
+
+details{border:1px solid var(--line);border-radius:12px;padding:0 16px;margin-bottom:10px;background:var(--bg)}
+summary{cursor:pointer;font-weight:700;padding:12px 0}
+details[open]{padding-bottom:6px}
+
+.myth{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.myth p{margin:0 0 10px}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{background:var(--surface);border:2px solid var(--line);border-radius:10px;padding:7px 14px;font-weight:700}
+.opt:hover:not(:disabled){border-color:var(--brand)}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.fb{margin:10px 0 0;padding:10px 14px;border-radius:10px;font-size:.98rem}
+.fb.ok{background:var(--ok-bg);border-left:5px solid var(--ok)}
+.fb.no{background:var(--bad-bg);border-left:5px solid var(--bad)}
+.score{font-family:var(--font-head);font-weight:700;color:var(--brand)}
+
+.practice{background:var(--tint);border-radius:14px;padding:16px 18px;margin-top:16px}
+.practice h4{margin:0 0 6px;font-family:var(--font-head)}
+.prompt{background:var(--surface);border:1px dashed var(--brand);border-radius:10px;padding:12px 14px;white-space:pre-wrap;font-size:.98rem;margin:8px 0 10px}
+.prompt.mono{font-family:var(--mono);font-size:.86rem;background:var(--code-bg);border-style:solid;border-color:var(--line);overflow-x:auto}
+
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cmp>div{border-radius:12px;padding:14px 16px;border:2px solid var(--line)}
+.cmp .bad{border-color:var(--bad);background:var(--bad-bg)}
+.cmp .good{border-color:var(--ok);background:var(--ok-bg)}
+.cmp h4{margin:0 0 6px;font-family:var(--font-head)}
+.cmp p{margin:0;font-size:.98rem}
+
+.field{margin-bottom:14px}
+.field label{display:flex;justify-content:space-between;gap:10px;font-weight:700;margin-bottom:4px}
+.field .tick{color:var(--ok);font-weight:700;visibility:hidden}
+.field.filled .tick{visibility:visible}
+textarea,input[type=text]{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:10px 12px;resize:vertical}
+textarea.mono{font-family:var(--mono);font-size:.9rem}
+textarea:focus,input[type=text]:focus{border-color:var(--brand);outline:none}
+.builder{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+.preview{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);border:2px solid var(--brand);border-radius:14px;padding:14px 16px;background:var(--bg)}
+.preview .out{white-space:pre-wrap;min-height:90px;font-size:.98rem}
+.preview .out.empty{color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--surface);border:2px solid var(--line);border-radius:99px;padding:6px 14px;font-size:.95rem;text-align:left}
+.chip:hover{border-color:var(--brand)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.stats div{background:var(--tint);border-radius:12px;padding:10px 14px}
+.stats b{display:block;font-family:var(--font-head);font-size:1.5rem;line-height:1.1}
+.stats span{font-size:.9rem;color:var(--muted)}
+
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.tab{background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:8px 14px;font-weight:700}
+.tab[aria-selected="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.tpl{border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:12px}
+.tpl h4{margin:0;font-family:var(--font-head)}
+.loop{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.loop>div{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--bg)}
+.loop b{font-family:var(--font-head);display:block;margin-bottom:2px}
+.loop span{font-size:.93rem;color:var(--muted)}
+
+.spot{border:1px solid var(--line);border-radius:14px;padding:8px;background:var(--code-bg)}
+.sent{display:block;width:100%;text-align:left;background:none;border:2px solid transparent;border-radius:10px;padding:5px 12px;font-family:var(--mono);font-size:.86rem;white-space:pre-wrap}
+.sent:hover:not(:disabled){background:var(--tint)}
+.sent.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 20%,transparent)}
+.sent.hit{border-color:var(--ok);background:var(--ok-bg)}
+.sent.miss{border-color:var(--bad);background:var(--bad-bg)}
+.sent small{display:block;color:var(--muted);margin-top:4px;font-family:var(--font-body);font-size:.9rem;white-space:normal}
+
+.priv{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.priv .fb{grid-column:1/-1;margin:0}
+
+.rating{display:grid;grid-template-columns:1fr auto;gap:8px 16px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.scale{display:flex;gap:6px}
+.scale button{width:40px;height:40px;border-radius:10px;border:2px solid var(--line);background:var(--surface);font-weight:700}
+.scale button[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.scale-hint{display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted);max-width:280px;margin-left:auto;margin-top:6px}
+
+.check{display:flex;gap:10px;align-items:flex-start;padding:8px 0;cursor:pointer}
+.check input{width:22px;height:22px;margin-top:2px;accent-color:var(--brand);flex:none}
+
+.cases{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.case{text-align:left;background:var(--bg);border:2px solid var(--line);border-radius:14px;padding:14px}
+.case[aria-pressed="true"]{border-color:var(--brand);background:var(--tint)}
+.case strong{display:block;font-family:var(--font-head);margin-bottom:4px}
+.case span{font-size:.95rem;color:var(--muted)}
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.roles>div{border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.roles b{font-family:var(--font-head)}
+.steps{margin:0;padding-left:1.2em}
+.steps li{margin-bottom:6px}
+.clist{margin:0;padding-left:1.1em;font-size:.97rem}
+.clist li{margin-bottom:4px}
+
+table.cmpt{width:100%;border-collapse:collapse}
+.cmpt th,.cmpt td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
+.delta.up{color:var(--ok);font-weight:700}
+.delta.down{color:var(--bad);font-weight:700}
+.scroll{overflow-x:auto}
+
+.foot{display:flex;justify-content:space-between;gap:12px;margin-top:40px;padding-top:20px;border-top:1px solid var(--line)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--bg)}
+.card h4{margin:0 0 4px;font-family:var(--font-head)}
+.card p{margin:0;font-size:.97rem}
+.plan-list{list-style:none;padding:0;margin:0}
+.plan-list li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.plan-list span:last-child{color:var(--muted);white-space:nowrap}
+.note{border-left:5px solid var(--accent);background:color-mix(in srgb,var(--accent) 16%,var(--surface));border-radius:8px;padding:10px 14px;font-size:.96rem;margin-top:16px}
+.note p{margin:0}
+
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;gap:16px;padding:16px 14px 50px}
+  .route{position:sticky;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:10;display:flex;gap:4px;overflow-x:auto;background:var(--bg);padding:8px 14px;margin:0 -14px;border-bottom:1px solid var(--line)}
+  .route li{flex:none}
+  .route li::before{display:none!important}
+  .stop{margin:0;padding:4px 10px 4px 4px;gap:8px}
+  .time{display:none}
+  .label{font-size:.85rem;max-width:110px}
+  .builder,.cmp,.cases,.roles,.two,.three{grid-template-columns:1fr}
+  .loop{grid-template-columns:1fr 1fr}
+  .preview{position:static}
+  .brand{display:none}
+}
+
+:root{--f1:#0E6E6E;--f2:#2D5FB3;--f3:#7B3FA3;--f4:#A85A0B;--f5:#1B7F4B}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--f1:#4CC2B5;--f2:#7FAAF0;--f3:#C59BE8;--f4:#F0A85A;--f5:#5ED49A}}
+:root[data-theme="dark"]{--f1:#4CC2B5;--f2:#7FAAF0;--f3:#C59BE8;--f4:#F0A85A;--f5:#5ED49A}
+
+.fig{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--bg);margin:14px 0}
+.fig-cap{font-size:.88rem;color:var(--muted);margin:10px 0 0;max-width:none}
+.badge{display:inline-block;font-size:.8rem;font-weight:700;padding:2px 10px;border-radius:99px;background:var(--tint);color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);margin-right:6px}
+
+.ntp-sent{font-size:1.15rem;font-family:var(--font-head);font-weight:600;margin:0 0 12px;max-width:none}
+.ntp-sent .gen{background:var(--accent);color:var(--accent-ink);border-radius:6px;padding:1px 8px}
+.cand{display:grid;grid-template-columns:170px 1fr 44px;gap:10px;align-items:center;margin-bottom:6px;font-size:.95rem}
+.cand .track{height:16px;background:var(--tint);border-radius:99px;overflow:hidden}
+.cand .bar2{height:100%;background:var(--brand);border-radius:99px}
+.cand.picked .bar2{background:var(--accent)}
+.cand.picked code{background:var(--accent);color:var(--accent-ink)}
+
+.ctxbar{display:flex;height:34px;border-radius:10px;overflow:hidden;border:2px solid var(--line);background:var(--surface)}
+.ctxbar span{display:block;height:100%;border-right:2px solid var(--surface)}
+.ctxmeta{display:flex;justify-content:space-between;font-size:.9rem;color:var(--muted);margin-top:6px}
+.ctxmeta .over{color:var(--bad);font-weight:700}
+
+.seegrid{display:grid;grid-template-columns:1fr 70px 1fr;gap:10px;align-items:stretch}
+.see,.nosee{border-radius:12px;padding:12px 14px;border:2px solid}
+.see{border-color:var(--ok);background:var(--ok-bg)}
+.nosee{border-color:var(--bad);background:var(--bad-bg);border-style:dashed}
+.see h4,.nosee h4{margin:0 0 6px;font-family:var(--font-head)}
+.see ul,.nosee ul{margin:0;padding-left:1.1em;font-size:.95rem}
+.ai-mid{display:grid;place-items:center}
+.ai-bubble{width:62px;height:62px;border-radius:50%;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;font-family:var(--font-head);font-weight:800;font-size:1.2rem}
+
+.flow{display:flex;align-items:stretch}
+.fstep{flex:1;border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface);font-size:.93rem}
+.fstep b{display:block;font-family:var(--font-head);margin-bottom:2px}
+.fstep.warn{border-color:var(--bad);background:var(--bad-bg)}
+.fstep.good{border-color:var(--ok);background:var(--ok-bg)}
+.farrow{flex:none;width:26px;display:grid;place-items:center;color:var(--muted);font-weight:700}
+.niche{display:grid;grid-template-columns:130px 1fr;gap:8px 10px;align-items:center;font-size:.93rem}
+.niche .track{height:14px;background:var(--tint);border-radius:99px;overflow:hidden}
+.niche .track i{display:block;height:100%;background:var(--brand);border-radius:99px}
+.niche .track i.low{background:var(--bad)}
+
+.seg{background:color-mix(in srgb,var(--c) 20%,transparent);border-bottom:3px solid var(--c);padding:0 2px;border-radius:3px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:10px;font-size:.85rem}
+.pline{border-left:5px solid var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);border-radius:6px;padding:4px 10px;margin-bottom:6px}
+.ptag{display:block;font-size:.78rem;font-weight:700;color:var(--c)}
+.clar{display:flex;gap:4px;margin:8px 0}
+.clar i{flex:1;height:8px;border-radius:99px;background:var(--line)}
+.clar i.on{background:var(--brand)}
+
+.pipe{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.pn{border:2px solid var(--brand);background:var(--surface);border-radius:12px;padding:8px 14px;font-weight:700;text-align:left;min-width:120px}
+.pn small{display:block;font-weight:400;color:var(--muted);font-size:.8rem}
+.pn[aria-pressed="true"]{background:var(--brand);color:var(--brand-ink)}
+.pn[aria-pressed="true"] small{color:var(--brand-ink)}
+.pn.dashed{border-style:dashed}
+.parrow{color:var(--muted);font-weight:700}
+.tipbox{margin-top:12px;border:2px solid var(--brand);border-radius:12px;padding:12px 16px;background:var(--surface)}
+.tipbox h4{margin:0 0 6px;font-family:var(--font-head)}
+.tipbox dl{margin:0;display:grid;grid-template-columns:90px 1fr;gap:6px 12px;font-size:.96rem}
+.tipbox dt{font-weight:700;color:var(--brand)}
+.tipbox dd{margin:0}
+
+.light3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.lt{border-radius:12px;padding:12px 14px;border:2px solid}
+.lt h4{margin:0 0 4px;font-family:var(--font-head)}
+.lt ul{margin:0;padding-left:1.1em;font-size:.95rem}
+.lt p{margin:8px 0 0;font-size:.9rem;color:var(--muted)}
+.lt.g{border-color:var(--ok);background:var(--ok-bg)}
+.lt.y{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,var(--surface))}
+.lt.r{border-color:var(--bad);background:var(--bad-bg)}
+
+.tbar{display:flex;border-radius:10px;overflow:hidden;border:2px solid var(--line);margin:8px 0 14px}
+.tbar div{padding:8px 4px;font-size:.78rem;text-align:center;border-right:2px solid var(--surface);background:var(--tint);overflow:hidden}
+.tbar div:last-child{border-right:0}
+.tbar b{display:block;font-size:1rem;font-family:var(--font-head)}
+
+svg.cycle{width:100%;max-width:540px;height:auto;display:block;margin:0 auto}
+svg.cycle .box{fill:var(--surface);stroke:var(--brand);stroke-width:2.5}
+svg.cycle text{fill:var(--ink);font-family:var(--font-body)}
+svg.cycle .t1{font-weight:700;font-size:16px}
+svg.cycle .t2{font-size:13px;fill:var(--muted)}
+svg.cycle .arr{stroke:var(--brand);stroke-width:3;fill:none}
+svg.cycle .mid{font-size:14px;fill:var(--muted)}
+
+@media (max-width:900px){
+  .seegrid{grid-template-columns:1fr}
+  .ai-mid{padding:2px 0}
+  .flow{flex-direction:column}
+  .farrow{width:auto;height:24px;transform:rotate(90deg)}
+  .light3{grid-template-columns:1fr}
+  .cand{grid-template-columns:120px 1fr 40px}
+  .niche{grid-template-columns:100px 1fr}
+  .tipbox dl{grid-template-columns:1fr;gap:2px}
+  .tipbox dt{margin-top:6px}
+}
+
+[hidden]{display:none!important}
+.topbar{flex-wrap:wrap}
+.rchip{font-size:.8rem;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--tint);color:var(--ink);white-space:nowrap}
+.rchip.admin{background:var(--accent);color:var(--accent-ink)}
+.sync{font-size:.8rem;color:var(--muted);min-width:64px}
+.vtabs{display:flex;gap:6px;flex-wrap:wrap}
+.vt{border:2px solid var(--line);background:var(--surface);border-radius:99px;padding:4px 12px;font-weight:700;font-size:.9rem}
+.vt[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.banner{background:color-mix(in srgb,var(--accent) 22%,var(--surface));border-bottom:1px solid var(--line);padding:8px 20px;font-size:.93rem}
+.app.wide{grid-template-columns:1fr}
+.app.wide .route{display:none}
+
+.stats4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}
+.stats4>div{background:var(--tint);border-radius:12px;padding:12px 14px}
+.stats4 b{display:block;font-family:var(--font-head);font-size:1.7rem;line-height:1.1}
+.stats4 span{font-size:.88rem;color:var(--muted)}
+.hbar{display:grid;grid-template-columns:170px 1fr 74px;gap:10px;align-items:center;font-size:.92rem;margin-bottom:6px}
+.hbar .track{height:14px;background:var(--tint);border-radius:99px;overflow:hidden}
+.hbar .track i{display:block;height:100%;background:var(--brand);border-radius:99px}
+.hbar.two .track{height:24px;display:flex;flex-direction:column;gap:2px;padding:2px 0;border-radius:8px}
+.hbar.two .track i{height:9px}
+.hbar.two .track i.pre{background:var(--muted);opacity:.55}
+.filters{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;align-items:center}
+.filters input,.filters select{font:inherit;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:8px 12px}
+.filters input{flex:1;min-width:180px}
+table.ptab td,table.ptab th{white-space:nowrap}
+.pn2{display:inline-flex;align-items:center;gap:8px;font-weight:700}
+.av{width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--tint)}
+.mini{display:inline-block;width:90px;height:10px;background:var(--tint);border-radius:99px;overflow:hidden;vertical-align:middle;margin-right:6px}
+.mini i{display:block;height:100%;background:var(--brand)}
+.st{font-size:.8rem;font-weight:700;padding:2px 10px;border-radius:99px}
+.st.done{background:var(--ok-bg);color:var(--ok)}
+.st.prog{background:color-mix(in srgb,var(--accent) 25%,var(--surface))}
+.st.none{background:var(--tint);color:var(--muted)}
+.regform{max-width:520px}
+.regform select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:10px 12px}
+.errtxt{color:var(--bad);font-weight:700;margin:10px 0}
+@media (max-width:900px){
+  .stats4{grid-template-columns:1fr 1fr}
+  .hbar{grid-template-columns:110px 1fr 60px}
+  .banner{padding:8px 14px}
+  .topbar{padding:8px 14px;gap:8px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+@media print{.topbar,.route,.foot,.btn,.toggle{display:none!important}.app{display:block}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">IA para devs</div>
+  <div class="meter" id="meter" role="group" aria-label="Progreso">
+    <div class="bar"><div class="fill" id="fill" style="width:0%"></div></div>
+    <span id="pct">0 de 7</span>
+  </div>
+  <div class="vtabs" id="vtabs"></div>
+  <span class="rchip" id="rchip"></span>
+  <span class="sync" id="syncSt" role="status" aria-live="polite"></span>
+  <button class="toggle" id="facilBtn" data-a="facil" aria-pressed="false" hidden>Modo facilitador</button>
+</header>
+<div class="banner" id="banner" role="status" hidden></div>
+
+<div class="app" id="app">
+  <ol class="route" id="nav" aria-label="Ruta de aprendizaje"></ol>
+  <main class="panel" id="main"></main>
+</div>
+
+<script>
+"use strict";
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const KEY = "ruta-ia-dev-v2";
+function defaults(){return {ntp:{i:0,picks:[]},ctx:{q:true,code:true,err:true},node:{dev:"write",app:"api"},step:0,done:{},pre:{},post:{},myths:{},quiz:{},fields:{},role:"debug",chk:{},spot:{py:[],js:[]},spotDone:{py:false,js:false},spotTab:"py",priv:{},chall:0,rubric:{},plan:"",task:"",tok:"",facil:false,reg:null,updatedAt:0};}
+let mem = null;
+function load(){
+  try{ const r = localStorage.getItem(KEY); if(r) return Object.assign(defaults(), JSON.parse(r)); }catch(e){}
+  return mem || defaults();
+}
+let S = load();
+function save(){ S.updatedAt = Date.now(); mem = S; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} scheduleSync(); }
+const byId = id => document.getElementById(id);
+const TOKEN_KEY = "ruta-ia-token", ADMIN_KEY = "ruta-ia-admin";
+const CLOUD = {role:"connecting",token:"",adminToken:"",uid:null,name:"",saving:false,dirty:false,timer:null,poll:null,sync:"",partErr:"",partReady:false};
+const V = {view:"ruta",q:"",area:"",state:"",sel:null,delId:null,cr:false,rf:null,regErr:"",flash:"",loginErr:"",busy:false};
+let PART = [], PROF = {};
+function canFacil(){ return CLOUD.role==="admin" || CLOUD.role==="local"; }
+function canSync(){ return !!(CLOUD.token && CLOUD.role==="participant"); }
+async function api(path, opt){
+  opt = opt || {};
+  const headers = {"Content-Type":"application/json"};
+  const tk = opt.admin ? CLOUD.adminToken : CLOUD.token;
+  if(tk) headers["Authorization"] = "Bearer " + tk;
+  let res;
+  try{ res = await fetch("api" + path, {method:opt.method||"GET", headers, body: opt.body ? JSON.stringify(opt.body) : undefined}); }
+  catch(e){ const er = new Error("network"); er.code = "network"; throw er; }
+  if(!res.ok){
+    const er = new Error("http"); er.status = res.status;
+    er.code = res.status===401 ? "unauthorized" : res.status===429 ? "rate_limited" : "http_" + res.status;
+    throw er;
+  }
+  return res.status===204 ? null : res.json();
+}
+function scheduleSync(){ if(!canSync()) return; CLOUD.dirty=true; clearTimeout(CLOUD.timer); CLOUD.timer=setTimeout(flush,1500); }
+function flushNow(){ if(!canSync()) return; clearTimeout(CLOUD.timer); CLOUD.dirty=true; flush(); }
+
+/* ---------- contenido ---------- */
+const STEPS = [
+  {id:"inicio", nav:"Punto de partida", title:"Bienvenida y punto de partida", min:15},
+  {id:"m1", nav:"Cómo funciona un LLM", title:"Cómo funciona un LLM: lo que un dev debe saber", min:20},
+  {id:"m2", nav:"Prompting para código", title:"Prompting para código", min:30},
+  {id:"m3", nav:"Flujo de desarrollo", title:"La IA en tu flujo de desarrollo", min:30},
+  {id:"m4", nav:"Riesgos y seguridad", title:"Riesgos: calidad, seguridad y licencias", min:25},
+  {id:"m5", nav:"Reto final", title:"Reto final en equipos", min:30},
+  {id:"cierre", nav:"Cierre y plan", title:"Cierre y plan de acción", min:10}
+];
+const SKILLS = [
+  "Entiendo cómo funcionan los LLM y cuáles son sus límites",
+  "Sé escribir prompts claros para generar y corregir código",
+  "Uso la IA en mi flujo diario: depurar, probar, revisar, documentar",
+  "Sé revisar y verificar el código que genera la IA",
+  "Sé qué código y datos no debo compartir con una herramienta de IA"
+];
+const FACIL = {
+  inicio:"Presenta el objetivo en 2 minutos. Pide que cada persona abra su cuenta gratuita de IA y confirme que puede enviar un mensaje. Aplica la autoevaluación y define con el grupo qué stack usarán en los ejemplos.",
+  m1:"Proyecta los visuales en orden. En el primero, pulsa «Generar palabra» varias veces en voz alta: verán que cambia y que a veces inventa. En el segundo, marca el repositorio completo para mostrar el desborde. Cierra con el contador de tokens y los mitos y verdades.",
+  m2:"Muestra en vivo el prompt débil y su resultado. Cada persona arma el suyo con el laboratorio, lo pega junto con código real (sin secretos) y compara. Recoge los mejores prompts en un tablero compartido.",
+  m3:"Presenta el ciclo Contexto, Generar, Probar, Revisar. Recorran juntos los dos diagramas y pide que cada persona diga en qué etapa usaría la IA primero. Luego cada quien toma una tarea real de su backlog y muestra el antes y el después con su diff.",
+  m4:"Da 3 minutos para el ejercicio de código antes de revelar. Termina con la política de tu organización sobre herramientas de IA aprobadas, qué código puede compartirse y cómo tratar las licencias.",
+  m5:"Forma equipos de 3 y deja un cronómetro visible. Insiste en que el verificador ejecute el código, no solo lo lea. Cierra con presentaciones de 2 minutos y usa la rúbrica para dar retroalimentación.",
+  cierre:"Repite la autoevaluación y comparen. Pide un compromiso concreto para los próximos 7 días, por ejemplo una tarea del backlog resuelta con el flujo aprendido, y abre un canal para compartir avances."
+};
+const MYTHS = [
+  {t:"Si el código generado compila y se ejecuta, es correcto.", a:false, e:"Falso. Puede funcionar en el caso feliz y fallar con datos vacíos, concurrencia o entradas maliciosas. Compilar no es lo mismo que estar bien."},
+  {t:"La IA conoce siempre la última versión de tu framework o librería.", a:false, e:"Falso. Su conocimiento tiene una fecha de corte. Indica siempre versiones y contrasta con la documentación oficial."},
+  {t:"Pegar un archivo enorme siempre mejora la respuesta.", a:false, e:"Falso. La ventana de contexto es limitada y el ruido puede empeorar el resultado. Comparte solo el código relevante."},
+  {t:"Pedir la misma solución dos veces puede dar código distinto.", a:true, e:"Verdad. Las respuestas no son deterministas. Por eso los tests son tu red de seguridad."},
+  {t:"La IA es útil para pruebas, documentación, refactors y entender código ajeno.", a:true, e:"Verdad. Son tareas donde aporta mucho valor, siempre que revises el resultado."},
+  {t:"La IA reemplazará a los desarrolladores en poco tiempo.", a:false, e:"Falso. Cambia cómo se trabaja, pero el diseño, el criterio, la revisión y la responsabilidad siguen siendo tuyos."},
+  {t:"Pegar una API key de prueba en el chat es inofensivo.", a:false, e:"Falso. Lo que escribes puede quedar guardado por la plataforma. Los secretos no se pegan nunca y, si pasó, se rotan."}
+];
+const CONCEPTS = [
+  ["Tokens y ventana de contexto","El modelo lee tokens, no caracteres, y solo considera una cantidad limitada por conversación. Si excedes el límite, lo más antiguo se pierde o la calidad baja. Comparte solo el código relevante.","una pizarra de tamaño fijo: si escribes demasiado, lo primero que anotaste se borra."],
+  ["No determinismo","La misma instrucción puede producir salidas distintas. No confíes en una sola ejecución: define criterios de aceptación y pruébalos.","pedirle a dos colegas que escriban la misma función: ambas pueden servir, pero no serán iguales."],
+  ["Alucinación en código","Puede inventar funciones, parámetros, endpoints o paquetes que no existen y presentarlos con total seguridad. Verifica todo contra la documentación oficial.","un colega que prefiere inventar con seguridad antes que decir «no sé»."],
+  ["Fecha de corte del conocimiento","Lo que sabe llega hasta cierta fecha. Las versiones nuevas, los cambios incompatibles y las vulnerabilidades recientes pueden no estar. Indica versiones en tu prompt.","un colega que estuvo un tiempo sin leer noticias: sabe mucho, pero de lo más reciente no está al día."],
+  ["Contexto de tu proyecto","La IA no ve tu repositorio, tu configuración ni tus servicios. Dale el fragmento relevante, la versión y las restricciones.","pedir ayuda por teléfono a alguien que no puede ver tu pantalla: solo sabe lo que le describes."]
+];
+const FIELDS = [
+  {k:"rol",  n:"Rol y stack",  ph:"Ej: Eres un desarrollador backend senior. Stack: Python 3.12, FastAPI, PostgreSQL."},
+  {k:"ctx",  n:"Contexto",     ph:"Ej: El endpoint /orders devuelve 500 cuando el usuario no tiene perfil. Error y código a continuación: [pega]"},
+  {k:"tarea",n:"Tarea",        ph:"Ej: Explica la causa probable y propón el arreglo mínimo."},
+  {k:"rest", n:"Restricciones",ph:"Ej: No cambies la firma de la función. Sin dependencias nuevas. No inventes APIs."},
+  {k:"fmt",  n:"Formato de salida",ph:"Ej: Causa en 2 líneas y luego solo el diff."}
+];
+const CHIPS = [
+  "Antes de cambiar nada, dime las causas posibles y cómo comprobar cada una.",
+  "Ahora escribe pruebas que fallen con el bug original y pasen con tu arreglo.",
+  "¿Qué casos borde y riesgos tiene este cambio?",
+  "Hazlo más simple, sin abstracciones nuevas.",
+  "¿Qué de tu respuesta debería verificar en la documentación oficial?"
+];
+const ROLES = {
+  debug:{n:"Depurar",t:[
+    ["Diagnosticar un error","Actúa como desarrollador senior de [lenguaje/framework y versión]. Tengo este error: [mensaje sin datos sensibles]. Código relacionado: [pega]. Antes de proponer un arreglo, dame 3 causas probables ordenadas y cómo comprobar cada una."],
+    ["Reproducir un bug","Con este comportamiento: [descripción], escribe el caso mínimo que lo reproduce y la prueba que fallaría. No propongas el arreglo todavía."],
+    ["Leer un stack trace","Explícame este stack trace de abajo a arriba y dime cuál es el origen más probable. Indica qué archivo o línea revisar primero.\n\n[stack trace con rutas y nombres internos anonimizados]"]]},
+  review:{n:"Code review",t:[
+    ["Revisar un cambio","Revisa este código como un revisor exigente. Señala bugs, casos borde, problemas de seguridad y de legibilidad. Clasifica cada hallazgo como crítico, importante o menor. No reescribas todo: solo lo que cambiarías.\n\n[pega código]"],
+    ["Buscar vulnerabilidades","Analiza este código buscando vulnerabilidades comunes: inyección, validación de entradas, manejo de secretos y autenticación. Para cada hallazgo indica línea, riesgo y corrección. Si no estás seguro, dilo.\n\n[pega código]"],
+    ["Descripción de PR","A partir de este diff, redacta la descripción de un pull request: qué cambia, por qué, cómo probarlo y riesgos.\n\n[pega diff]"]]},
+  tests:{n:"Pruebas",t:[
+    ["Pruebas unitarias","Escribe pruebas unitarias con [framework] para esta función. Cubre el caso feliz, casos borde y errores esperados. No modifiques la función.\n\n[pega función]"],
+    ["Casos borde faltantes","Lista los casos borde que esta función no maneja y escribe una prueba por cada uno. Indica cuáles fallan hoy.\n\n[pega función]"],
+    ["Datos de prueba","Genera 10 registros ficticios en JSON con este esquema: [esquema]. Incluye 2 casos límite y 1 con datos inválidos."]]},
+  refactor:{n:"Refactor y legacy",t:[
+    ["Entender código ajeno","Explícame qué hace este código como si fuera nuevo en el equipo. Resume el flujo, las dependencias y lo que podría causar problemas.\n\n[pega código]"],
+    ["Refactorizar con seguridad","Refactoriza este código para mejorar la legibilidad sin cambiar su comportamiento. Hazlo en pasos pequeños y dime cómo comprobar que todo sigue igual.\n\n[pega código]"],
+    ["Migrar de versión","Ayúdame a migrar este código de [versión A] a [versión B]. Lista los cambios incompatibles y aplícalos. Indica qué debo confirmar en las notas oficiales de la versión.\n\n[pega código]"]]},
+  docs:{n:"Docs y datos",t:[
+    ["Documentar una función","Escribe la documentación de esta función: propósito, parámetros, valor de retorno, errores y un ejemplo de uso. Formato [docstring/JSDoc].\n\n[pega función]"],
+    ["Consulta SQL","Escribe una consulta SQL para [objetivo] con este esquema: [tablas y columnas]. Explica cada parte y avísame de posibles problemas de rendimiento o índices necesarios."],
+    ["Mensaje de commit","Redacta un mensaje de commit en formato Conventional Commits para este diff. Título de máximo 72 caracteres y cuerpo con el porqué.\n\n[pega diff]"]]}
+};
+const EXER = {
+  py:{n:"Python (API)", intro:"Una IA generó esta función de Python para obtener los correos de una lista de usuarios.", lines:[
+    {t:"import requests", err:false},
+    {t:"from fastjsonparse import parse", err:true, why:"Paquete que no reconoces. La IA puede inventar nombres, y un nombre inventado puede ser registrado por un atacante. Confirma que existe y es confiable antes de instalarlo."},
+    {t:"def get_user_emails(ids):", err:false},
+    {t:"    emails = []", err:false},
+    {t:"    for id in ids:", err:true, why:"Sombrea la función integrada id(). Es un problema menor de calidad: mejor user_id."},
+    {t:"        r = requests.get(f\"https://api.example.com/users/{id}\")", err:true, why:"Sin timeout ni comprobación del estado HTTP. Una respuesta lenta bloquea todo y un error 500 pasa desapercibido."},
+    {t:"        data = parse(r.text)", err:true, why:"Innecesario: r.json() hace lo mismo sin una dependencia extra."},
+    {t:"        emails.append(data[\"email\"])", err:true, why:"Lanza KeyError si el campo no existe. Valida o usa .get() y decide qué hacer."},
+    {t:"    return emails", err:false}
+  ]},
+  js:{n:"JavaScript (Node)", intro:"Una IA generó este endpoint de Node con Express.", lines:[
+    {t:"const express = require('express');", err:false},
+    {t:"const app = express();", err:false},
+    {t:"app.get('/users/:id', async (req, res) => {", err:false},
+    {t:"  const user = await db.query(\"SELECT * FROM users WHERE id = \" + req.params.id);", err:true, why:"Concatena la entrada del usuario dentro de la consulta: es una inyección SQL. Usa consultas parametrizadas."},
+    {t:"  console.log('Usuario: ' + JSON.stringify(user));", err:true, why:"Registra el objeto completo del usuario en el log, con posibles datos personales. Registra solo identificadores."},
+    {t:"  res.json({ ...user, token: process.env.API_TOKEN });", err:true, why:"Devuelve un secreto de entorno al cliente. Los secretos nunca deben salir en una respuesta."},
+    {t:"  res.send(user.renderProfile());", err:true, why:"Envía una segunda respuesta después de res.json (fallará por cabeceras ya enviadas) y renderProfile() no parece un método real: verifícalo antes de usarlo."},
+    {t:"});", err:false},
+    {t:"app.listen(3000);", err:false}
+  ]}
+};
+const PRIV = [
+  {t:"Un snippet de tu código sin lógica de negocio sensible ni secretos", a:"ok", e:"Suele ser aceptable, siempre que tu organización permita usar esa herramienta."},
+  {t:"Un stack trace con rutas, nombres de servidores y usuarios internos", a:"anon", e:"Reemplaza rutas, hosts y nombres por marcadores genéricos y luego compártelo."},
+  {t:"Tu archivo .env con claves y cadenas de conexión", a:"no", e:"Nunca. Si lo compartiste por error, rota esas credenciales de inmediato."},
+  {t:"Una API key «solo de pruebas» para que la IA te ayude a conectarte", a:"no", e:"No. Usa una variable de entorno o un valor falso como TU_API_KEY."},
+  {t:"Código de documentación pública o de un proyecto open source", a:"ok", e:"Es información pública y no hay problema."},
+  {t:"Logs de producción con correos e identificadores de clientes", a:"anon", e:"Quita o enmascara los datos personales antes de compartir cualquier fragmento."},
+  {t:"El núcleo propietario de tu producto, completo", a:"no", e:"No, salvo que tu empresa tenga una herramienta aprobada para eso. Comparte solo lo mínimo."},
+  {t:"Un volcado de base de datos con datos reales", a:"no", e:"Nunca. Usa datos ficticios que respeten el mismo esquema."}
+];
+const CHALLS = [
+  {n:"Depurar una función",d:"Esta función se cae en producción de vez en cuando. Encuentren la causa, corrijan y añadan pruebas que lo demuestren.",h:"Pidan primero un diagnóstico con causas probables y luego el arreglo. Exijan una prueba que falle con el código original.",
+   sample:`def average_order_value(orders):
+    total = 0
+    for o in orders:
+        total += o["amount"]
+    return total / len(orders)`},
+  {n:"Pruebas para una función",d:"Esta función valida nombres de usuario. Generen un conjunto de pruebas que cubra casos borde y ejecútenlas.",h:"Pidan casos borde (vacío, espacios, unicode, longitud límite) y ejecuten las pruebas. ¿Alguna falla? ¿La función o la prueba está mal?",
+   sample:`def is_valid_username(name):
+    return 3 <= len(name) <= 16 and name.isalnum()`},
+  {n:"Refactor sin romper nada",d:"Este código funciona pero es difícil de leer. Refactorícenlo y demuestren que el comportamiento no cambió.",h:"Escriban primero pruebas del comportamiento actual, luego refactoricen y confirmen que siguen pasando.",
+   sample:`function price(user, qty) {
+  if (user.type === "vip") {
+    if (qty > 10) { return qty * 8; } else { return qty * 9; }
+  } else {
+    if (qty > 10) { return qty * 9; } else { return qty * 10; }
+  }
+}`}
+];
+const RUBRIC = [
+  "El prompt incluye stack, versión, contexto y formato de salida",
+  "Ejecutamos el código y las pruebas, no solo lo leímos",
+  "Iteramos usando el error o el resultado real",
+  "Verificamos APIs, paquetes y versiones en la documentación oficial",
+  "No pegamos secretos ni datos reales"
+];
+const QUIZ = {
+  q2:{q:"¿Cuál de estos prompts probablemente dará mejor resultado?",o:[
+    "Arregla mi API.",
+    "Uso Node 20 con Express. El endpoint POST /orders devuelve 500 si falta el campo items. Dame la causa probable y el arreglo mínimo como diff, sin librerías nuevas.",
+    "El código no funciona, hazlo funcionar rápido."],c:1,
+    e:"El segundo indica stack, versión, síntoma, límites y formato de salida. Los otros obligan a la IA a adivinar."},
+  q3:{q:"La IA te da una función que parece correcta. ¿Qué haces antes de integrarla?",o:[
+    "La pego y hago commit: se ve bien.",
+    "La ejecuto, pruebo casos borde y reviso el diff como si fuera el PR de un junior.",
+    "Le pregunto si está segura y, si dice que sí, la integro."],c:1,
+    e:"Preguntarle a la IA si tiene razón no sustituye ejecutar y probar. Tú eres quien responde por el código."}
+};
+
+/* ---------- componentes ---------- */
+function copyBtn(txt, label="Copiar"){ return `<button class="btn small ghost" data-a="copy" data-t="${esc(txt)}">${label}</button>`; }
+function practice(title, text, note){
+  return `<div class="practice"><h4>${esc(title)}</h4>${note?`<p style="margin:0 0 4px">${note}</p>`:""}<div class="prompt">${esc(text)}</div>${copyBtn(text)}</div>`;
+}
+function quiz(id){
+  const q = QUIZ[id], sel = S.quiz[id], answered = sel !== undefined;
+  return `<div class="myth"><p><b>${esc(q.q)}</b></p><div class="opts" style="flex-direction:column;align-items:stretch">` +
+    q.o.map((o,i)=>{
+      let cls = "opt";
+      if(answered){ if(i===q.c) cls+=" right"; else if(i===sel) cls+=" wrong"; }
+      return `<button class="${cls}" style="text-align:left" data-a="quiz" data-id="${id}" data-v="${i}" ${answered?"disabled":""}>${esc(o)}</button>`;
+    }).join("") + `</div>` +
+    (answered?`<div class="fb ${sel===q.c?"ok":"no"}" role="status"><b>${sel===q.c?"Correcto.":"Casi."}</b> ${esc(q.e)}</div>`:"") + `</div>`;
+}
+function rating(t,i){
+  const cur = S[t][i];
+  return `<div class="rating"><div>${esc(SKILLS[i])}</div><div class="scale" role="group" aria-label="${esc(SKILLS[i])}">` +
+    [1,2,3,4,5].map(v=>`<button data-a="rate" data-t="${t}" data-i="${i}" data-v="${v}" aria-pressed="${cur===v}">${v}</button>`).join("") + `</div></div>`;
+}
+const scaleHint = `<div class="scale-hint"><span>1 = nada</span><span>5 = mucho</span></div>`;
+function tokStats(txt){
+  const c = txt.length, w = txt.trim()?txt.trim().split(/\s+/).length:0, t = Math.ceil(c/4);
+  return {c,w,t};
+}
+
+/* ---------- visuales ---------- */
+const NTP = [
+  {p:"En Python, para convertir un texto JSON en un diccionario se usa json.", ex:"Es una función real, pero lee desde un archivo, no desde un texto.", note:"«parse» existe en JavaScript (JSON.parse) y la IA lo mezcla. «fromString» es un nombre que inventamos para el ejemplo.", c:[
+    {w:"loads", v:55, s:"ok"},{w:"load", v:20, s:"exists"},{w:"parse", v:17, s:"fake"},{w:"fromString", v:8, s:"fake"}]},
+  {p:"Para hacer peticiones HTTP en Python, la biblioteca más usada es", ex:"Es real y válida, pero no es la más usada: la IA elige lo más probable, no lo mejor para tu caso.", note:"«fasthttpclient» es un nombre que inventamos. Así aparecen los paquetes inventados que no conviene instalar sin verificar.", c:[
+    {w:"requests", v:60, s:"ok"},{w:"urllib", v:15, s:"exists"},{w:"httpx", v:15, s:"exists"},{w:"fasthttpclient", v:10, s:"fake"}]}
+];
+const CTX = [
+  {k:"q", n:"Tu pregunta", t:150, c:"var(--f2)"},
+  {k:"code", n:"Código de la función", t:600, c:"var(--f1)"},
+  {k:"err", n:"Mensaje de error y traza", t:400, c:"var(--f3)"},
+  {k:"file", n:"Archivo completo", t:3000, c:"var(--f4)"},
+  {k:"log", n:"Log largo", t:4000, c:"var(--f5)"},
+  {k:"repo", n:"Todo el repositorio", t:8000, c:"#8a8f98"}
+];
+const CTX_CAP = 10000;
+const PIPES = {
+  dev:{cap:"Ejemplo simplificado del trabajo de un desarrollador. Tu flujo puede variar.", nodes:[
+    {id:"understand",n:"Entender",sub:"Código ajeno",dar:"El fragmento relevante (sin secretos) y qué te confunde.",pedir:"Un resumen del flujo, las dependencias y los riesgos.",ver:"Contrasta con el código real y con quien lo escribió, si es posible."},
+    {id:"design",n:"Diseñar",sub:"Enfoque",dar:"El requisito, las restricciones y el stack con versiones.",pedir:"Dos o tres alternativas con ventajas y riesgos.",ver:"Que las alternativas encajen con tu arquitectura real."},
+    {id:"write",n:"Escribir",sub:"Código",dar:"Stack, versión, firma esperada y un ejemplo de entrada y salida.",pedir:"Una pieza pequeña y acotada, con manejo de errores.",ver:"Que las APIs y paquetes existan, y que compile y corra."},
+    {id:"test",n:"Probar",sub:"Pruebas",dar:"La función y el comportamiento esperado.",pedir:"Casos normales, de borde e inválidos.",ver:"Ejecútalas: una prueba que nunca falla no prueba nada."},
+    {id:"review",n:"Revisar",sub:"Calidad y seguridad",dar:"El diff y el objetivo del cambio.",pedir:"Bugs, casos borde y vulnerabilidades, clasificados por gravedad.",ver:"Confirma cada hallazgo: la IA puede señalar problemas que no existen."},
+    {id:"ship",n:"Entregar",sub:"PR y documentación",dar:"El diff y el contexto del cambio.",pedir:"Descripción del PR, notas de cambio y documentación.",ver:"Que lo escrito coincida con lo que realmente hace el código."}],
+    extra:{id:"debug",n:"Depurar",sub:"Si algo falla",dashed:true,dar:"El error y la traza, sin datos sensibles.",pedir:"Causas probables ordenadas y cómo comprobar cada una.",ver:"Reproduce el error y confirma la causa antes de cambiar nada."}},
+  app:{cap:"Ejemplo simplificado de una aplicación por capas. Tu arquitectura puede ser distinta.", nodes:[
+    {id:"ui",n:"Interfaz",sub:"Cliente",dar:"El componente, el framework y la versión.",pedir:"Un componente o una corrección acotada, con estados de carga y error.",ver:"Accesibilidad, casos vacíos y que las APIs usadas existan en tu versión."},
+    {id:"api",n:"API",sub:"Endpoints",dar:"El contrato (OpenAPI o ejemplos de petición y respuesta).",pedir:"Validación de entradas y manejo de errores coherente.",ver:"Autenticación, códigos de estado y que no se reflejen secretos."},
+    {id:"logic",n:"Lógica",sub:"Reglas de negocio",dar:"Las reglas en lenguaje claro y ejemplos concretos.",pedir:"La implementación y una prueba por cada regla.",ver:"Casos borde y que la IA no haya inventado reglas."},
+    {id:"db",n:"Base de datos",sub:"Consultas",dar:"El esquema (sin datos reales) y el objetivo de la consulta.",pedir:"La consulta, un índice sugerido y una explicación.",ver:"Consultas parametrizadas y el plan de ejecución real."},
+    {id:"ci",n:"Pipeline",sub:"CI/CD",dar:"Tu flujo actual y las herramientas que usas.",pedir:"Un borrador del pipeline y de sus comprobaciones.",ver:"Permisos mínimos y que ningún secreto quede en el repositorio."}]}
+};
+
+function ntpHtml(){
+  const n = S.ntp, ph = NTP[n.i];
+  const last = n.picks.length ? n.picks[n.picks.length-1] : null;
+  const tally = {ok:0,exists:0,fake:0};
+  n.picks.forEach(k=>{ if(ph.c[k]) tally[ph.c[k].s]++; });
+  let msg = "";
+  if(last!==null && ph.c[last]){
+    const st = ph.c[last].s;
+    msg = st==="ok" ? `<div class="fb ok" role="status"><b>Acertó esta vez.</b> Genera otra vez: no siempre será igual.</div>`
+        : st==="exists" ? `<div class="fb no" role="status"><b>Es real, pero no es la mejor respuesta.</b> ${esc(ph.ex)}</div>`
+        : `<div class="fb no" role="status"><b>Inventó algo que suena correcto.</b> ${esc(ph.note)}</div>`;
+  }
+  return `<div class="fig">
+    <span class="badge">Probabilidades ilustrativas</span>
+    <p class="ntp-sent" style="margin-top:10px">${esc(ph.p)} <span class="gen">${last!==null?esc(ph.c[last].w):"…"}</span></p>
+    ${ph.c.map((c,i)=>`<div class="cand ${last===i?"picked":""}"><span><code>${esc(c.w)}</code></span><div class="track"><div class="bar2" style="width:${c.v}%"></div></div><span>${c.v}%</span></div>`).join("")}
+    <div class="row" style="margin-top:12px"><button class="btn small" data-a="ntpgen">Generar palabra</button><button class="btn small ghost" data-a="ntpswap">Otro ejemplo</button></div>
+    ${msg}
+    ${n.picks.length?`<p class="hint" style="margin:10px 0 0">Intentos: ${n.picks.length}. Correctas: ${tally.ok}. Con problemas: ${tally.exists+tally.fake}.</p>`:""}
+    <p class="fig-cap">El modelo no consulta la documentación: elige según probabilidad. Por eso conviene verificar.</p></div>`;
+}
+function ctxHtml(){
+  let total = 0; CTX.forEach(c=>{ if(S.ctx[c.k]) total += c.t; });
+  let used = 0; const segs = [];
+  CTX.forEach(c=>{ if(S.ctx[c.k]){ const w = Math.max(0, Math.min(c.t, CTX_CAP-used)); used += w; if(w>0) segs.push(`<span title="${esc(c.n)}" style="width:${w/CTX_CAP*100}%;background:${c.c}"></span>`); } });
+  const pct = Math.round(total/CTX_CAP*100), over = total>CTX_CAP;
+  const msg = over ? "Te pasaste: parte de lo que pegaste se perdería o la respuesta empeoraría." : pct>60 ? "Se está llenando: queda poco espacio para la respuesta." : "Buen equilibrio: solo lo relevante.";
+  return `<div class="fig"><span class="badge">Ilustrativo: el tamaño real depende de la herramienta</span>
+    <div class="ctxbar" style="margin-top:10px" role="img" aria-label="Uso de la ventana de contexto: ${pct}%">${segs.join("")}</div>
+    <div class="ctxmeta"><span>${total.toLocaleString("es")} de ${CTX_CAP.toLocaleString("es")} unidades</span><span class="${over?"over":""}">${pct}%</span></div>
+    <div class="fb ${over?"no":"ok"}" role="status">${msg}</div>
+    <div style="margin-top:10px">${CTX.map(c=>`<label class="check"><input type="checkbox" data-a="ctx" data-k="${c.k}" ${S.ctx[c.k]?"checked":""}><span><i class="dot" style="--c:${c.c}"></i>${esc(c.n)} <span class="hint">(${c.t.toLocaleString("es")})</span></span></label>`).join("")}</div>
+    <p class="fig-cap">Más contenido no siempre es mejor: comparte solo lo que la IA necesita para la tarea.</p></div>`;
+}
+function seeHtml(){
+  return `<div class="fig"><div class="seegrid">
+    <div class="see"><h4>Lo que la IA ve</h4><ul><li>Tu mensaje (el prompt)</li><li>Lo que pegas: código, errores y ejemplos</li><li>El historial de esta conversación</li></ul></div>
+    <div class="ai-mid"><div class="ai-bubble" aria-hidden="true">IA</div></div>
+    <div class="nosee"><h4>Lo que la IA no ve</h4><ul><li>Tu repositorio y tu configuración</li><li>Tus servicios, bases de datos y entornos</li><li>Tus variables de entorno y secretos</li><li>Las reglas y decisiones de tu equipo</li><li>La documentación de tu versión, salvo que se la pegues o la herramienta la busque</li></ul></div>
+  </div><p class="fig-cap">Todo lo que no le cuentas, lo adivina. Por eso el prompt necesita stack, versión, ejemplo y restricciones.</p></div>`;
+}
+function halluHtml(){
+  const niche = [["Python",95],["JavaScript",92],["Java",88],["Librerías poco usadas",30],["Versiones muy recientes",20],["Tu código interno",5]];
+  return `<div class="fig"><div class="flow">
+    <div class="fstep"><b>Tu pregunta</b>«¿Qué función hace esto?»</div><div class="farrow" aria-hidden="true">→</div>
+    <div class="fstep warn"><b>Patrones aprendidos</b>No abre la documentación: completa con lo más probable.</div><div class="farrow" aria-hidden="true">→</div>
+    <div class="fstep warn"><b>Respuesta convincente</b>Puede incluir funciones o paquetes que no existen.</div><div class="farrow" aria-hidden="true">→</div>
+    <div class="fstep good"><b>Tú verificas</b>Documentación oficial y prueba en tu entorno.</div></div>
+    <h4 style="margin:18px 0 6px;font-family:var(--font-head)">Menos ejemplos públicos, más riesgo</h4>
+    <span class="badge">Ilustrativo: muestra la idea, no son cifras medidas</span>
+    <div class="niche" style="margin-top:10px">${niche.map(n=>`<span>${n[0]}</span><div class="track"><i class="${n[1]<50?"low":""}" style="width:${n[1]}%"></i></div>`).join("")}</div>
+    <p class="fig-cap">Cuantos menos ejemplos públicos tiene una librería o un lenguaje, más probable es que la IA lo mezcle con otro. Ahí la verificación es imprescindible.</p></div>`;
+}
+function cycleSvg(){
+  return `<div class="fig"><svg class="cycle" viewBox="0 0 440 280" role="img" aria-label="Ciclo de cuatro pasos que se repite: contexto, generar, probar y revisar">
+    <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--brand)"/></marker></defs>
+    <rect class="box" x="10" y="14" width="190" height="74" rx="14"/><text class="t1" x="105" y="46" text-anchor="middle">1. Contexto</text><text class="t2" x="105" y="68" text-anchor="middle">Stack, versión, ejemplo</text>
+    <rect class="box" x="240" y="14" width="190" height="74" rx="14"/><text class="t1" x="335" y="46" text-anchor="middle">2. Generar</text><text class="t2" x="335" y="68" text-anchor="middle">Una pieza acotada</text>
+    <rect class="box" x="240" y="192" width="190" height="74" rx="14"/><text class="t1" x="335" y="224" text-anchor="middle">3. Probar</text><text class="t2" x="335" y="246" text-anchor="middle">Casos normales y de borde</text>
+    <rect class="box" x="10" y="192" width="190" height="74" rx="14"/><text class="t1" x="105" y="224" text-anchor="middle">4. Revisar</text><text class="t2" x="105" y="246" text-anchor="middle">Documentación y cambios</text>
+    <path class="arr" d="M203 51 H237" marker-end="url(#ah)"/>
+    <path class="arr" d="M335 91 V189" marker-end="url(#ah)"/>
+    <path class="arr" d="M237 229 H203" marker-end="url(#ah)"/>
+    <path class="arr" d="M105 189 V91" marker-end="url(#ah)"/>
+    <text class="mid" x="220" y="136" text-anchor="middle">Repite hasta que funcione</text>
+    <text class="mid" x="220" y="156" text-anchor="middle">y esté verificado</text>
+  </svg></div>`;
+}
+function pipeHtml(g){
+  const P = PIPES[g];
+  const all = P.nodes.concat(P.extra?[P.extra]:[]);
+  const cur = all.find(n=>n.id===S.node[g]) || P.nodes[0];
+  const btn = n => `<button class="pn ${n.dashed?"dashed":""}" data-a="node" data-g="${g}" data-v="${n.id}" aria-pressed="${cur.id===n.id}">${esc(n.n)}<small>${esc(n.sub)}</small></button>`;
+  return `<div class="fig">
+    
+    <div class="pipe">${P.nodes.map((n,i)=>(i?`<span class="parrow" aria-hidden="true">→</span>`:"")+btn(n)).join("")}</div>
+    ${P.extra?`<div class="pipe" style="margin-top:10px"><span class="hint">Si algo falla:</span>${btn(P.extra)}</div>`:""}
+    <div class="tipbox" role="status"><h4>${esc(cur.n)}: ${esc(cur.sub)}</h4><dl>
+      <dt>Dale</dt><dd>${esc(cur.dar)}</dd>
+      <dt>Pídele</dt><dd>${esc(cur.pedir)}</dd>
+      <dt>Verifica</dt><dd>${esc(cur.ver)}</dd></dl></div>
+    <p class="fig-cap">${esc(P.cap)}</p></div>`;
+}
+function pvHtml(){
+  const f = S.fields;
+  const parts = FIELDS.map((x,i)=>{ const v=(f[x.k]||"").trim(); return v?`<div class="pline" style="--c:var(--f${i+1})"><span class="ptag">${esc(x.n)}</span>${esc(v)}</div>`:""; }).join("");
+  return parts || "Empieza a escribir en los campos.";
+}
+function clarHtml(n){ return `<div class="clar" aria-hidden="true">`+[1,2,3,4,5].map(i=>`<i class="${i<=n?"on":""}"></i>`).join("")+`</div>`; }
+function pvcText(n){ return n+" de 5 elementos completos · "+(n<=2?"prompt débil":n<5?"mejorando":"prompt completo"); }
+
+/* ---------- pasos ---------- */
+function bodyInicio(){
+  return `
+  <p class="lead">Esta ruta es para quienes escriben código. Aprenderás a usar la IA como un compañero de trabajo que acelera tareas, y a revisarla como revisarías el PR de alguien nuevo en el equipo. Todo se practica con una <b>cuenta gratuita</b> (Claude, ChatGPT, Gemini o Copilot). No necesitas API ni tokens de pago.</p>
+  <div class="two" style="margin:22px 0">
+    <div class="card"><h4>Cómo funciona</h4><p>Cada módulo tiene una idea corta y una práctica con código real. La regla: 5 minutos de concepto, 15 de práctica.</p></div>
+    <div class="card"><h4>Antes de empezar</h4><p>Abre una herramienta de IA gratuita y ten a mano un fragmento de código propio (sin secretos) y un error real. Los límites gratuitos cambian: si se agotan, usa una segunda herramienta.</p></div>
+  </div>
+  <div class="note"><p><b>Regla de este curso:</b> la IA propone y tú verificas. Todo paquete, API o función que genere debe confirmarse en la documentación oficial y probarse en tu entorno.</p></div>
+  <div class="block"><h3>Tu recorrido</h3>
+    <ul class="plan-list">${STEPS.slice(1).map((s,i)=>`<li><span><b>Módulo ${i+1}.</b> ${esc(s.title)}</span><span>${s.min} min</span></li>`).join("")}
+    <li><span><b>Total aproximado</b></span><span>${STEPS.reduce((a,s)=>a+s.min,0)} min</span></li></ul>
+  </div>
+  <div class="block"><h3>¿Cómo estás hoy?</h3>
+    <p class="hint">Califica cada afirmación del 1 al 5. Al final la repetirás para ver tu avance.</p>
+    ${SKILLS.map((_,i)=>rating("pre",i)).join("")}${scaleHint}
+  </div>`;
+}
+function bodyM1(){
+  const answered = Object.keys(S.myths).length;
+  const correct = MYTHS.reduce((a,m,i)=>a+(S.myths[i]!==undefined && S.myths[i]===m.a?1:0),0);
+  const st = tokStats(S.tok||"");
+  return `
+  <p class="lead">Entender lo básico de un modelo de lenguaje te ayuda a anticipar cuándo va a acertar y cuándo va a inventar, sobre todo con librerías poco conocidas o versiones muy recientes. Empecemos con cuatro visuales que puedes manipular.</p>
+  <div class="block"><h3>1. Cómo «piensa» un modelo de lenguaje</h3>
+    <p>No busca la respuesta en un manual: va eligiendo, palabra por palabra, la continuación más probable según lo que aprendió. Pulsa el botón varias veces y observa.</p>${ntpHtml()}</div>
+  <div class="block"><h3>2. La ventana de contexto</h3>
+    <p>La IA solo puede atender una cantidad limitada de contenido a la vez. Marca y desmarca lo que pegarías en una consulta y mira cómo se llena.</p>${ctxHtml()}</div>
+  <div class="block"><h3>3. Lo que la IA ve y lo que no ve</h3>${seeHtml()}</div>
+  <div class="block"><h3>4. De dónde salen las alucinaciones</h3>${halluHtml()}</div>
+  <div class="block"><h3>Ideas clave con analogías</h3>
+    ${CONCEPTS.map(c=>`<details><summary>${esc(c[0])}</summary><p>${esc(c[1])}</p><p class="hint"><b>Piensa en:</b> ${esc(c[2])}</p></details>`).join("")}
+  </div>
+  <div class="block"><h3>Contador de tokens aproximado</h3>
+    <p class="hint">Pega un fragmento de código, sin secretos ni datos sensibles. La estimación usa unos 4 caracteres por token; el valor real varía según el modelo y el contenido.</p>
+    <div class="field"><label for="tok">Tu fragmento</label><textarea id="tok" class="mono" rows="5" data-tok placeholder="Pega aquí una función o un archivo pequeño">${esc(S.tok||"")}</textarea></div>
+    <div class="stats" aria-live="polite"><div><b id="tk-c">${st.c}</b><span>caracteres</span></div><div><b id="tk-w">${st.w}</b><span>palabras</span></div><div><b id="tk-t">${st.t}</b><span>tokens aprox.</span></div></div>
+    <p class="hint" style="margin-top:10px">Un archivo completo o un repositorio entero pesa mucho y contiene más de lo que la IA necesita. Piensa qué parte es realmente relevante.</p>
+  </div>
+  <div class="block"><h3>Mitos y verdades</h3>
+    <p class="hint">Decide si cada afirmación es verdad o falsa. Verás la explicación al instante.</p>
+    ${MYTHS.map((m,i)=>{
+      const sel=S.myths[i], done=sel!==undefined;
+      const btn=(v,l)=>{let c="opt"; if(done){ if(v===m.a)c+=" right"; else if(v===sel)c+=" wrong"; } return `<button class="${c}" data-a="myth" data-i="${i}" data-v="${v}" ${done?"disabled":""}>${l}</button>`;};
+      return `<div class="myth"><p>${esc(m.t)}</p><div class="opts">${btn(true,"Verdad")}${btn(false,"Falso")}</div>${done?`<div class="fb ${sel===m.a?"ok":"no"}" role="status">${esc(m.e)}</div>`:""}</div>`;
+    }).join("")}
+    <p class="score" role="status">${answered?`Aciertos: ${correct} de ${MYTHS.length}`:"Aún no has respondido."}</p>
+  </div>
+  <div class="block"><h3>Pruébalo tú mismo</h3>
+    ${practice("Detecta una alucinación","Dame un ejemplo de código en [tu lenguaje] que use la función [nombre de una función que NO exista, por ejemplo list.flatten()] de la biblioteca estándar.","Pídele algo que no existe y observa si te lo inventa o si te corrige. Reemplaza los corchetes con tu lenguaje y una función falsa, y luego verifica en la documentación oficial.")}
+  </div>`;
+}
+function buildPrompt(){
+  const f=S.fields; return FIELDS.map(x=>(f[x.k]||"").trim()).filter(Boolean).join("\n");
+}
+function bodyM2(){
+  const f=S.fields;
+  const filled = FIELDS.filter(x=>(f[x.k]||"").trim()).length;
+  return `
+  <p class="lead">Un buen prompt para código se parece a un buen ticket: contexto, objetivo, límites y criterio de aceptación.</p>
+  <div class="block"><h3>Mismo pedido, dos resultados</h3>
+    <div class="cmp">
+      <div class="bad"><h4>Prompt débil</h4><p>«Arréglame este código.»</p><p class="hint" style="margin-top:8px">No dice el lenguaje, la versión, el error ni qué significa «arreglado». La IA adivina.</p></div>
+      <div class="good"><h4>Prompt claro, por partes</h4><p>«<span class="seg" style="--c:var(--f1)">Eres desarrollador backend senior y trabajo con Python 3.12 y FastAPI.</span> <span class="seg" style="--c:var(--f2)">Este endpoint devuelve 500 si el usuario no tiene perfil; te pego el código y la traza.</span> <span class="seg" style="--c:var(--f3)">Encuentra la causa.</span> <span class="seg" style="--c:var(--f4)">No cambies la firma ni añadas dependencias.</span> <span class="seg" style="--c:var(--f5)">Explica en 2 líneas y muestra solo el diff.</span>»</p>
+        <div class="legend"><span><i class="dot" style="--c:var(--f1)"></i>Rol y stack</span><span><i class="dot" style="--c:var(--f2)"></i>Contexto</span><span><i class="dot" style="--c:var(--f3)"></i>Tarea</span><span><i class="dot" style="--c:var(--f4)"></i>Restricciones</span><span><i class="dot" style="--c:var(--f5)"></i>Formato</span></div></div>
+    </div>
+  </div>
+  <div class="block"><h3>Laboratorio de prompts</h3>
+    <p class="hint">Completa los cinco elementos con un problema real de tu proyecto. Tu prompt se arma a la derecha.</p>
+    <div class="builder">
+      <div>
+        ${FIELDS.map((x,ix)=>`<div class="field ${(f[x.k]||"").trim()?"filled":""}" data-wrap="${x.k}"><label for="f-${x.k}"><span><i class="dot" style="--c:var(--f${ix+1})"></i>${x.n}</span><span class="tick">Listo</span></label><textarea id="f-${x.k}" rows="2" data-field="${x.k}" placeholder="${esc(x.ph)}">${esc(f[x.k]||"")}</textarea></div>`).join("")}
+      </div>
+      <div class="preview"><h4 style="margin:0 0 6px;font-family:var(--font-head)">Tu prompt</h4>
+        <div class="out ${filled?"":"empty"}" id="pv" aria-live="polite">${pvHtml()}</div><div id="clar">${clarHtml(filled)}</div>
+        <p class="hint" id="pvc" style="margin:8px 0">${pvcText(filled)}</p>
+        <div class="row"><button class="btn small" data-a="copyPrompt">Copiar prompt</button></div>
+      </div>
+    </div>
+    <div class="practice"><h4>Ahora compáralo</h4><p style="margin:0">Pega tu prompt en la herramienta junto con el código y el error reales. Luego pega solo «Arréglame este código» con el mismo código. Anota qué diferencias notas.</p></div>
+  </div>
+  <div class="block"><h3>Itera con lo que obtuviste</h3>
+    <p>La primera respuesta rara vez es la final. Devuelve a la IA el resultado real (error, salida, prueba fallida) y usa frases como estas:</p>
+    <div class="chips">${CHIPS.map(c=>`<button class="chip" data-a="copy" data-t="${esc(c)}" title="Copiar">${esc(c)}</button>`).join("")}</div>
+  </div>
+  <div class="block"><h3>Comprueba lo aprendido</h3>${quiz("q2")}</div>`;
+}
+function bodyM3(){
+  const r = ROLES[S.role];
+  const steps=["Elegí una tarea real de mi backlog.","Di el contexto: stack, versión, código y error.","Ejecuté y probé el resultado; no solo lo leí.","Revisé el diff como si fuera el PR de un junior."];
+  return `
+  <p class="lead">Usa la IA donde ya pierdes tiempo: depurar, probar, revisar, documentar y entender código ajeno.</p>
+  <div class="block"><h3>El ciclo de trabajo</h3>${cycleSvg()}</div>
+  <div class="block"><h3>Dónde ayuda la IA en tu flujo de desarrollo</h3>
+    <p class="hint">Toca cada etapa para ver qué darle a la IA, qué pedirle y qué verificar.</p>${pipeHtml("dev")}</div>
+  <div class="block"><h3>Dónde ayuda la IA en una aplicación</h3>
+    <p class="hint">Mismo ejercicio, ahora por capas.</p>${pipeHtml("app")}</div>
+  <div class="block"><h3>Plantillas por tarea</h3>
+    <p class="hint">Elige una tarea, copia la plantilla y reemplaza lo que está entre [corchetes].</p>
+    <div class="tabs" role="tablist">${Object.entries(ROLES).map(([k,v])=>`<button class="tab" role="tab" data-a="role" data-v="${k}" aria-selected="${S.role===k}">${esc(v.n)}</button>`).join("")}</div>
+    ${r.t.map(t=>`<div class="tpl"><h4>${esc(t[0])}</h4><div class="prompt">${esc(t[1])}</div>${copyBtn(t[1])}</div>`).join("")}
+  </div>
+  <div class="block"><h3>Tu tarea real</h3>
+    <div class="field"><label for="task">¿Qué tarea de tu backlog vas a resolver con IA?</label><input type="text" id="task" data-task placeholder="Ej: Escribir pruebas para el módulo de facturación" value="${esc(S.task||"")}"></div>
+    ${steps.map((s,i)=>`<label class="check"><input type="checkbox" data-a="chk" data-i="${i}" ${S.chk[i]?"checked":""}><span>${s}</span></label>`).join("")}
+  </div>
+  <div class="block"><h3>Comprueba lo aprendido</h3>${quiz("q3")}</div>`;
+}
+function bodyM4(){
+  const tab = S.spotTab, ex = EXER[tab], lines = ex.lines;
+  const sel = S.spot[tab], rev = S.spotDone[tab];
+  const hits = lines.filter((s,i)=>s.err && sel.includes(i)).length;
+  const falseAlarms = lines.filter((s,i)=>!s.err && sel.includes(i)).length;
+  const totalErr = lines.filter(s=>s.err).length;
+  const pc = PRIV.filter((p,i)=>S.priv[i]!==undefined && S.priv[i]===p.a).length;
+  return `
+  <p class="lead">El código de la IA se trata como el de una persona nueva en el equipo: útil, pero con revisión, pruebas y cuidado con lo que compartes.</p>
+  <div class="block"><h3>Semáforo de confianza</h3>
+    <p class="hint">Cuánto debes revisar depende de qué tan grave sería un error.</p>
+    <div class="light3">
+      <div class="lt g"><h4>Verde: punto de partida</h4><ul><li>Borradores de documentación</li><li>Casos de prueba y datos ficticios</li><li>Explicar código o errores</li></ul><p>Revisión rápida.</p></div>
+      <div class="lt y"><h4>Amarillo: pruébalo siempre</h4><ul><li>Lógica de negocio y refactors</li><li>Consultas SQL y migraciones</li><li>Scripts de despliegue</li></ul><p>Ejecútalo, pruébalo y confirma en la documentación.</p></div>
+      <div class="lt r"><h4>Rojo: decide una persona</h4><ul><li>Seguridad y autenticación</li><li>Secretos, llaves y certificados</li><li>Cambios en producción</li></ul><p>La IA sugiere; tú decides y otra persona revisa.</p></div>
+    </div></div>
+  <div class="block"><h3>Encuentra los problemas en el código</h3>
+    <div class="tabs" role="tablist">${Object.entries(EXER).map(([k,v])=>`<button class="tab" role="tab" data-a="spottab" data-v="${k}" aria-selected="${tab===k}">${esc(v.n)}</button>`).join("")}</div>
+    <p class="hint">${esc(ex.intro)} Toca las líneas que corregirías o verificarías y pulsa «Revisar».</p>
+    <div class="spot">${lines.map((s,i)=>{
+      let c="sent"; const on=sel.includes(i);
+      if(rev){ if(s.err&&on)c+=" hit"; else if(s.err&&!on)c+=" miss"; else if(!s.err&&on)c+=" miss"; }
+      else if(on) c+=" sel";
+      const note = rev && s.err ? `<small>${esc(s.why)}</small>` : (rev && !s.err && on ? `<small>Esta línea es correcta, no había que cambiarla.</small>` : "");
+      return `<button class="${c}" data-a="spot" data-i="${i}" aria-pressed="${on}" ${rev?"disabled":""}>${esc(s.t)}${note}</button>`;
+    }).join("")}</div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" data-a="spotcheck" ${rev?"disabled":""}>Revisar</button>
+      ${rev?`<button class="btn ghost" data-a="spotreset">Intentar de nuevo</button>`:""}
+    </div>
+    ${rev?`<div class="fb ${hits===totalErr&&!falseAlarms?"ok":"no"}" role="status"><b>Encontraste ${hits} de ${totalErr} problemas${falseAlarms?` y marcaste ${falseAlarms} línea(s) de más`:""}.</b> Antes de dar por bueno cualquier resultado, ejecútalo, pruébalo y confirma lo que no reconozcas en la documentación.</div>`:""}
+  </div>
+  <div class="block"><h3>¿Puedo pegar esto en la IA?</h3>
+    <p class="hint">Clasifica cada elemento antes de compartirlo con una herramienta de IA.</p>
+    ${PRIV.map((p,i)=>{
+      const sel=S.priv[i], done=sel!==undefined;
+      const b=(v,l)=>{let c="opt"; if(done){ if(v===p.a)c+=" right"; else if(v===sel)c+=" wrong"; } return `<button class="${c}" data-a="priv" data-i="${i}" data-v="${v}" ${done?"disabled":""}>${l}</button>`;};
+      return `<div class="priv"><div>${esc(p.t)}</div><div class="opts">${b("ok","Sí")}${b("anon","Anonimizar")}${b("no","No")}</div>${done?`<div class="fb ${sel===p.a?"ok":"no"}" role="status">${esc(p.e)}</div>`:""}</div>`;
+    }).join("")}
+    <p class="score" role="status">${Object.keys(S.priv).length?`Aciertos: ${pc} de ${PRIV.length}`:""}</p>
+  </div>
+  <div class="block"><h3>Checklist de revisión del código generado</h3>
+    <div class="two">
+      <div class="card"><h4>Calidad</h4><ul class="clist">
+        <li>Compila, se ejecuta y las pruebas pasan.</li>
+        <li>Casos borde y valores vacíos manejados.</li>
+        <li>APIs, funciones y paquetes existen en tu versión.</li>
+        <li>Errores y tiempos de espera tratados.</li>
+        <li>El diff es pequeño y lo entiendes por completo.</li>
+      </ul></div>
+      <div class="card"><h4>Seguridad y licencias</h4><ul class="clist">
+        <li>Entradas validadas y consultas parametrizadas.</li>
+        <li>Sin secretos en el código, en respuestas ni en logs.</li>
+        <li>Dependencias nuevas revisadas antes de instalarlas.</li>
+        <li>Permisos mínimos en cualquier script o pipeline.</li>
+        <li>Licencia y política de tu organización respetadas.</li>
+      </ul></div>
+    </div>
+    <div class="note"><p>Consulta la política de tu organización sobre herramientas de IA aprobadas y sobre qué código puede compartirse fuera de la empresa.</p></div>
+  </div>`;
+}
+function bodyM5(){
+  const c = CHALLS[S.chall];
+  const score = RUBRIC.filter((_,i)=>S.rubric[i]).length;
+  return `
+  <p class="lead">Juntemos todo. En equipos de tres resolverán un caso con código real, lo ejecutarán y presentarán el resultado en 2 minutos.</p>
+  <div class="block"><h3>Elijan un caso</h3>
+    <div class="cases">${CHALLS.map((x,i)=>`<button class="case" data-a="chall" data-i="${i}" aria-pressed="${S.chall===i}"><strong>${esc(x.n)}</strong><span>${esc(x.d)}</span></button>`).join("")}</div>
+    <div class="practice"><h4>Código del caso</h4><div class="prompt mono">${esc(c.sample)}</div>${copyBtn(c.sample,"Copiar código")}
+      <p style="margin:12px 0 0"><b>Pista:</b> ${esc(c.h)}</p></div>
+  </div>
+  <div class="block"><h3>Roles del equipo</h3>
+    <div class="roles">
+      <div><b>Líder del prompt</b><p style="margin:4px 0 0">Escribe y ajusta las instrucciones.</p></div>
+      <div><b>Verificador</b><p style="margin:4px 0 0">Ejecuta el código y las pruebas. Revisa la documentación.</p></div>
+      <div><b>Presentador</b><p style="margin:4px 0 0">Prepara y cuenta el resultado.</p></div>
+    </div>
+  </div>
+  <div class="block"><h3>Tiempos sugeridos</h3>
+    <div class="tbar" aria-hidden="true"><div style="flex:5"><b>5</b>Leer</div><div style="flex:15"><b>15</b>Construir y probar</div><div style="flex:5"><b>5</b>Verificar</div><div style="flex:5"><b>5</b>Preparar</div></div>
+    <ol class="steps"><li>5 min: leer el caso y repartir roles.</li><li>15 min: construir y mejorar el prompt, ejecutando cada versión.</li><li>5 min: verificar contra la documentación y ajustar.</li><li>5 min: preparar la presentación de 2 minutos.</li></ol>
+  </div>
+  <div class="block"><h3>Rúbrica del equipo</h3>
+    <p class="hint">Marquen lo que lograron.</p>
+    ${RUBRIC.map((r,i)=>`<label class="check"><input type="checkbox" data-a="rubric" data-i="${i}" ${S.rubric[i]?"checked":""}><span>${esc(r)}</span></label>`).join("")}
+    <p class="score" role="status">Puntaje: ${score} de ${RUBRIC.length}</p>
+  </div>
+  <div class="block"><h3>Guion para presentar</h3>
+    <ol class="steps"><li>El problema y el código de partida.</li><li>El prompt que mejor funcionó y por qué.</li><li>Qué falló, qué corregimos y cómo lo probamos.</li><li>Qué verificamos y qué haríamos distinto.</li></ol>
+  </div>`;
+}
+function summaryText(){
+  const doneN = STEPS.filter(s=>S.done[s.id]).length;
+  let t = "Mi ruta de IA para desarrolladores\nPasos completados: "+doneN+" de "+STEPS.length+"\n\nAutoevaluación (antes → después):\n";
+  SKILLS.forEach((s,i)=>{ t += "- "+s+": "+(S.pre[i]||"—")+" → "+(S.post[i]||"—")+"\n"; });
+  t += "\nMi plan para los próximos 7 días:\n"+(S.plan||"(pendiente)");
+  return t;
+}
+function bodyCierre(){
+  const rows = SKILLS.map((s,i)=>{
+    const a=S.pre[i], b=S.post[i]; let d="";
+    if(a&&b){ const x=b-a; d = x>0?`<span class="delta up">+${x}</span>`:x<0?`<span class="delta down">${x}</span>`:`<span class="hint">=</span>`; }
+    return `<tr><td>${esc(s)}</td><td>${a||"—"}</td><td>${b||"—"}</td><td>${d}</td></tr>`;
+  }).join("");
+  return `
+  <p class="lead">Terminaste la ruta. Falta medir tu avance y convertirlo en hábitos dentro de tu flujo de desarrollo y de tu equipo.</p>
+  <div class="block"><h3>¿Cómo estás ahora?</h3>
+    <p class="hint">Vuelve a calificar cada afirmación del 1 al 5.</p>
+    ${SKILLS.map((_,i)=>rating("post",i)).join("")}${scaleHint}
+  </div>
+  <div class="block"><h3>Tu avance</h3>
+    <div class="scroll"><table class="cmpt"><thead><tr><th>Habilidad</th><th>Antes</th><th>Ahora</th><th>Cambio</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </div>
+  <div class="block"><h3>Lleva esto a tu equipo</h3>
+    <div class="three">
+      <div class="card"><h4>Biblioteca de prompts</h4><p>Guarda en el repositorio los prompts que funcionaron, con versión, ejemplo y resultado verificado.</p></div>
+      <div class="card"><h4>Checklist de revisión</h4><p>Usa la lista del módulo 4 en cada revisión de código que tenga ayuda de IA.</p></div>
+      <div class="card"><h4>Regla de datos</h4><p>Acuerden qué se puede compartir, qué se anonimiza y qué nunca sale de la empresa.</p></div>
+    </div>
+  </div>
+  <div class="block"><h3>Mi plan de 7 días</h3>
+    <div class="field"><label for="plan">¿Qué tarea real vas a resolver con IA esta semana y cómo vas a verificar el resultado?</label>
+    <textarea id="plan" rows="4" data-plan placeholder="Ej: Generar pruebas para el módulo de pagos, ejecutarlas y revisar el diff antes de abrir el PR.">${esc(S.plan||"")}</textarea></div>
+    <div class="row"><button class="btn" data-a="copySummary">Copiar mi resumen</button></div>
+  </div>
+  <div class="block"><h3>Sigue practicando gratis</h3>
+    <p>Usa la herramienta gratuita que prefieras (Claude, ChatGPT, Gemini o Copilot) y compara resultados entre ellas con el mismo prompt. Revisa siempre las condiciones actuales del plan gratuito, porque los límites cambian.</p>
+    ${V.cr?`<div class="fb no" role="status"><b>¿Borrar tu progreso y tus respuestas?</b> Tu registro se conserva.</div><div class="row" style="margin-top:8px"><button class="btn small" data-a="reset">Sí, borrar</button><button class="btn small ghost" data-a="cancelreset">Cancelar</button></div>`:`<div class="row"><button class="btn ghost small" data-a="resetask">Reiniciar mi progreso</button></div>`}
+  </div>`;
+}
+const BODY = {inicio:bodyInicio,m1:bodyM1,m2:bodyM2,m3:bodyM3,m4:bodyM4,m5:bodyM5,cierre:bodyCierre};
+
+/* ---------- render ---------- */
+function renderNav(){
+  byId("nav").innerHTML = STEPS.map((s,i)=>{
+    const cls = (S.done[s.id]?"done ":"")+(S.step===i?"active":"");
+    return `<li class="${cls}"><button class="stop" data-a="go" data-i="${i}" ${S.step===i?'aria-current="step"':""}>
+      <span class="node">${S.done[s.id]?"✓":i}</span><span><span class="label">${esc(s.nav)}</span><span class="time">${s.min} min</span></span></button></li>`;
+  }).join("");
+  const n = STEPS.filter(s=>S.done[s.id]).length;
+  byId("fill").style.width = Math.round(n/STEPS.length*100)+"%";
+  byId("pct").textContent = n+" de "+STEPS.length;
+}
+function renderMain(){
+  const s = STEPS[S.step];
+  const first = S.step===0, last = S.step===STEPS.length-1;
+  byId("main").innerHTML = `
+    <div class="kicker">${S.step===0?"Inicio":last?"Cierre":"Módulo "+S.step} · ${s.min} minutos</div>
+    <h1>${esc(s.title)}</h1>
+    ${S.facil&&canFacil()?`<div class="facil"><strong>Guía del facilitador</strong><p>${esc(FACIL[s.id])}</p></div>`:""}
+    ${BODY[s.id]()}
+    <div class="foot">
+      <button class="btn ghost" data-a="prev" ${first?"disabled":""}>Anterior</button>
+      ${last?`<button class="btn" data-a="finish">${S.done[s.id]?"Ruta completada":"Marcar como completado"}</button>`:`<button class="btn" data-a="next">${S.step===0?"Empezar la ruta":"Completar y continuar"}</button>`}
+    </div>`;
+}
+function bannerText(){
+  if(CLOUD.role==="local") return "No se pudo conectar con el servidor. Tu avance se guarda solo en este navegador y no lo ve el equipo. Recarga la página para reintentar.";
+  if(CLOUD.sync==="error") return "No se pudo guardar en el servidor. Tu avance sigue en este navegador y se reintentará solo.";
+  return "";
+}
+function updateBanner(){ const b=byId("banner"), t=bannerText(); b.hidden=!t; b.textContent=t; }
+function renderTop(){
+  const r = CLOUD.role;
+  const labels = {connecting:"Conectando…",local:"Sin conexión",guest:"Sin registrar",participant:"Participante",admin:"Superadmin"};
+  const chip = byId("rchip"); chip.textContent = labels[r]||""; chip.className = "rchip "+(r==="admin"?"admin":"");
+  const tabs = [];
+  if(r==="admin"){ tabs.push(["panel","Panel"],["ruta","Ruta"],["logout","Salir"]); }
+  else if(r==="participant" && S.reg){ tabs.push(["ruta","Ruta"],["registro","Mi registro"],["login","Admin"]); }
+  else if(r==="guest" || r==="local"){ tabs.push(["login","Admin"]); }
+  byId("vtabs").innerHTML = tabs.map(t=> t[0]==="logout"
+    ? `<button class="vt" data-a="logout">${t[1]}</button>`
+    : `<button class="vt" data-a="view" data-v="${t[0]}" aria-pressed="${V.view===t[0]}">${t[1]}</button>`).join("");
+  const fb = byId("facilBtn"); fb.hidden = !canFacil(); fb.setAttribute("aria-pressed", String(!!S.facil));
+  byId("meter").hidden = V.view!=="ruta";
+  updateBanner();
+}
+function render(keepScroll){
+  const y = window.scrollY;
+  const r = CLOUD.role;
+  if(r==="admin" && V.view==="login") V.view="panel";
+  if(V.view==="panel" && r!=="admin") V.view="ruta";
+  if(r==="guest" && V.view!=="login") V.view="registro";
+  if(V.view==="registro" && r!=="guest" && r!=="participant") V.view="ruta";
+  renderTop();
+  byId("app").classList.toggle("wide", V.view!=="ruta");
+  if(V.view==="panel") renderPanel();
+  else if(V.view==="login") renderLogin();
+  else if(V.view==="registro") renderReg();
+  else { renderNav(); renderMain(); }
+  if(keepScroll) window.scrollTo(0,y); else window.scrollTo({top:0});
+}
+
+/* ---------- nube: sincronización ---------- */
+function setSync(st){
+  CLOUD.sync = st;
+  const e = byId("syncSt"); if(e) e.textContent = st==="saving"?"Guardando…":st==="saved"?"Guardado":st==="error"?"Sin guardar":"";
+  updateBanner();
+}
+function summary(){
+  const r = S.reg||{};
+  const done = STEPS.filter(x=>S.done[x.id]).map(x=>x.id);
+  const mythsC = MYTHS.reduce((a,m,i)=>a+(S.myths[i]!==undefined && S.myths[i]===m.a?1:0),0);
+  const privC = PRIV.filter((p,i)=>S.priv[i]!==undefined && S.priv[i]===p.a).length;
+  const quizC = Object.keys(QUIZ).filter(k=>S.quiz[k]===QUIZ[k].c).length;
+  return {fullName:r.fullName||"",area:r.area||"",cargo:r.cargo||"",nivel:r.nivel||"",registeredAt:r.registeredAt||0,
+    lastActivity:Date.now(),step:S.step,done,pre:S.pre,post:S.post,
+    scores:{mythsC,mythsT:Object.keys(S.myths).length,privC,privT:Object.keys(S.priv).length,quizC,quizT:Object.keys(S.quiz).length,rub:RUBRIC.filter((_,i)=>S.rubric[i]).length},v:1};
+}
+async function flush(){
+  if(CLOUD.saving){ CLOUD.dirty=true; return; }
+  if(!CLOUD.dirty || !canSync()) return;
+  CLOUD.saving=true; CLOUD.dirty=false; setSync("saving");
+  try{
+    const st = JSON.parse(JSON.stringify(S)); st.tok = (st.tok||"").slice(0,10000);
+    await api("/state", {method:"PUT", body:{state:st, summary:summary()}});
+    setSync("saved");
+  }catch(e){
+    if(e.code==="unauthorized"){
+      CLOUD.token=""; try{ localStorage.removeItem(TOKEN_KEY); }catch(_){}
+      CLOUD.role="guest"; setSync(""); V.view="registro"; initRegForm(); render(false);
+    } else { CLOUD.dirty=true; setSync("error"); clearTimeout(CLOUD.timer); CLOUD.timer=setTimeout(flush, 6000); }
+  }
+  CLOUD.saving=false;
+  if(CLOUD.dirty && CLOUD.sync!=="error"){ clearTimeout(CLOUD.timer); CLOUD.timer=setTimeout(flush,800); }
+}
+async function loadParticipants(){
+  try{ PART = await api("/admin/participants", {admin:true}); CLOUD.partErr=""; }
+  catch(e){ if(e.code==="unauthorized"){ adminLogout(); return; } CLOUD.partErr = e.code||"error"; }
+  CLOUD.partReady = true;
+  if(V.view==="panel"){ if(byId("ptable")) fillPanel(); else render(true); }
+}
+function startAdmin(){
+  clearInterval(CLOUD.poll); loadParticipants();
+  CLOUD.poll = setInterval(()=>{ if(!document.hidden && V.view==="panel") loadParticipants(); }, 30000);
+}
+function adminLogout(){
+  clearInterval(CLOUD.poll); CLOUD.adminToken=""; try{ localStorage.removeItem(ADMIN_KEY); }catch(e){}
+  PART=[]; CLOUD.partReady=false;
+  CLOUD.role = CLOUD.token ? "participant" : "guest";
+  V.view = CLOUD.role==="guest" ? "registro" : "ruta"; if(V.view==="registro") initRegForm();
+  render(false);
+}
+async function adminLogin(){
+  const el = byId("adminpw"); const pw = el ? el.value : "";
+  if(!pw){ V.loginErr="Escribe la contraseña."; render(true); return; }
+  try{
+    const r = await api("/admin/login", {method:"POST", body:{password:pw}});
+    CLOUD.adminToken = r.token; try{ localStorage.setItem(ADMIN_KEY, r.token); }catch(e){}
+    CLOUD.role="admin"; V.loginErr=""; V.view="panel"; CLOUD.partReady=false; startAdmin(); render(false);
+  }catch(e){
+    V.loginErr = e.code==="unauthorized" ? "Contraseña incorrecta." : e.code==="rate_limited" ? "Demasiados intentos. Espera unos minutos." : "No se pudo conectar con el servidor.";
+    render(true);
+  }
+}
+function enterAsParticipant(me, force){
+  CLOUD.role="participant"; CLOUD.uid=me.id; CLOUD.name=me.fullName||"";
+  const d = me.state;
+  if(d && (force || (d.updatedAt||0) > (S.updatedAt||0))){ S = Object.assign(defaults(), d); mem = S; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+  else if(force){ S = defaults(); mem = S; }
+  S.reg = {fullName:me.fullName,area:me.area,cargo:me.cargo,nivel:me.nivel,registeredAt:me.registeredAt,consent:true};
+}
+async function recoverWithCode(code){
+  try{
+    CLOUD.token = code; const me = await api("/me");
+    try{ localStorage.setItem(TOKEN_KEY, code); }catch(e){}
+    enterAsParticipant(me, true); if(S.step<0||S.step>=STEPS.length) S.step=0; V.view="ruta"; V.regErr=""; render(false);
+  }catch(e){
+    CLOUD.token=""; V.regErr = e.code==="network" ? "No se pudo conectar con el servidor." : "Código de acceso inválido."; render(true);
+  }
+}
+function afterRole(){
+  if(CLOUD.role==="admin") V.view = "panel";
+  else if(CLOUD.role==="guest"){ V.view = "registro"; initRegForm(); }
+  render(false);
+}
+async function initCloud(){
+  try{ CLOUD.token = localStorage.getItem(TOKEN_KEY)||""; CLOUD.adminToken = localStorage.getItem(ADMIN_KEY)||""; }catch(e){}
+  if(CLOUD.adminToken){
+    try{ await api("/admin/me", {admin:true}); CLOUD.role="admin"; startAdmin(); afterRole(); return; }
+    catch(e){ if(e.code==="network"){ CLOUD.role="local"; afterRole(); return; } CLOUD.adminToken=""; try{ localStorage.removeItem(ADMIN_KEY); }catch(_){} }
+  }
+  if(CLOUD.token){
+    try{ const me = await api("/me"); enterAsParticipant(me, false); afterRole(); return; }
+    catch(e){
+      if(e.code==="network"){ CLOUD.role="local"; afterRole(); return; }
+      if(e.code==="unauthorized"){ CLOUD.token=""; try{ localStorage.removeItem(TOKEN_KEY); }catch(_){} }
+      else { CLOUD.role="local"; afterRole(); return; }
+    }
+  }
+  CLOUD.role="guest"; afterRole();
+}
+
+/* ---------- registro ---------- */
+const CARGOS = ["Desarrollador/a","QA / Pruebas","DevOps / Infraestructura","Arquitectura","Líder técnico","Otro"];
+const NIVELES = ["Ninguna","Básica","Intermedia","Avanzada"];
+function initRegForm(){
+  const r = S.reg||{};
+  V.rf = {fullName:r.fullName||CLOUD.name||"", area:r.area||"", cargo:r.cargo||CARGOS[0], nivel:r.nivel||NIVELES[0], consent:!!r.consent};
+  V.regErr = "";
+}
+function renderReg(){
+  if(!V.rf) initRegForm();
+  const f = V.rf, editing = CLOUD.role==="participant" && !!S.reg;
+  byId("main").innerHTML = `
+    <div class="kicker">Registro</div>
+    <h1>${editing?"Mi registro":"Regístrate para empezar"}</h1>
+    <p class="lead">Con estos datos, las personas que administran la capacitación podrán ver tu avance. Tus respuestas, prompts y notas de práctica son privados: solo tú los ves.</p>
+    <div class="regform">
+      <div class="field"><label for="r-fullName">Nombre completo</label><input type="text" id="r-fullName" data-reg="fullName" maxlength="80" autocomplete="name" value="${esc(f.fullName)}"></div>
+      <div class="field"><label for="r-area">Área o equipo</label><input type="text" id="r-area" data-reg="area" maxlength="80" placeholder="Ej: Plataforma, Integraciones, QA" value="${esc(f.area)}"></div>
+      <div class="field"><label for="r-cargo">Cargo</label><select id="r-cargo" data-reg="cargo">${CARGOS.map(c=>`<option ${f.cargo===c?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
+      <div class="field"><label for="r-nivel">Experiencia previa con IA</label><select id="r-nivel" data-reg="nivel">${NIVELES.map(c=>`<option ${f.nivel===c?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
+      <label class="check"><input type="checkbox" id="r-consent" data-reg="consent" ${f.consent?"checked":""}><span>Acepto que mi nombre, área y avance sean visibles para los superadmins de esta capacitación.</span></label>
+      ${V.regErr?`<p class="errtxt" role="alert">${esc(V.regErr)}</p>`:""}
+      <div class="row" style="margin-top:14px"><button class="btn" data-a="regsave">${editing?"Guardar cambios":"Guardar y empezar"}</button>${editing?`<button class="btn ghost" data-a="view" data-v="ruta">Cancelar</button>`:""}</div>
+      ${editing && CLOUD.token ? `<div class="card" style="margin-top:18px"><h4>Tu código de acceso</h4><p class="hint">Guárdalo para continuar desde otro dispositivo o navegador. No lo compartas.</p><div class="row"><code style="word-break:break-all">${esc(CLOUD.token)}</code><button class="btn small ghost" data-a="copy" data-t="${esc(CLOUD.token)}">Copiar</button></div></div>` : ""}
+      ${!editing ? `<p class="hint" style="margin-top:18px">¿Ya te registraste antes? <button class="btn small ghost" data-a="usecode">Usar mi código de acceso</button></p>` : ""}
+    </div>`;
+}
+async function saveReg(){
+  if(V.busy) return;
+  const f = V.rf;
+  const err = !f.fullName.trim() ? "Escribe tu nombre." : !f.area.trim() ? "Indica tu área o equipo." : !f.consent ? "Debes aceptar que los superadmins vean tu avance." : "";
+  if(err){ V.regErr = err; render(true); return; }
+  V.regErr = ""; V.busy = true;
+  const body = {fullName:f.fullName.trim().slice(0,80), area:f.area.trim().slice(0,80), cargo:f.cargo, nivel:f.nivel};
+  try{
+    if(CLOUD.role==="participant"){
+      const r = await api("/me", {method:"PUT", body});
+      S.reg = Object.assign({}, body, {consent:true, registeredAt:r.registeredAt});
+    } else {
+      const r = await api("/register", {method:"POST", body:Object.assign({}, body, {consent:true})});
+      CLOUD.token = r.token; try{ localStorage.setItem(TOKEN_KEY, r.token); }catch(e){}
+      CLOUD.role = "participant"; CLOUD.uid = r.participant.id;
+      S.reg = Object.assign({}, body, {consent:true, registeredAt:r.participant.registeredAt});
+    }
+  }catch(e){
+    V.busy = false;
+    V.regErr = e.code==="network" ? "No se pudo conectar. Revisa tu internet e intenta de nuevo." : e.code==="rate_limited" ? "Demasiados intentos. Espera unos minutos." : "No se pudo guardar tu registro. Intenta de nuevo.";
+    render(true); return;
+  }
+  V.busy = false;
+  save(); flushNow();
+  V.view = "ruta"; render(false);
+}
+function renderLogin(){
+  byId("main").innerHTML = `
+    <div class="kicker">Acceso</div>
+    <h1>Acceso de superadmin</h1>
+    <p class="lead">Ingresa la contraseña de administración para ver el avance del grupo.</p>
+    <div class="regform">
+      <div class="field"><label for="adminpw">Contraseña</label><input type="password" id="adminpw" autocomplete="current-password"></div>
+      ${V.loginErr?`<p class="errtxt" role="alert">${esc(V.loginErr)}</p>`:""}
+      <div class="row" style="margin-top:14px"><button class="btn" data-a="adminlogin">Entrar</button><button class="btn ghost" data-a="view" data-v="${CLOUD.role==="guest"?"registro":"ruta"}">Volver</button></div>
+    </div>`;
+}
+
+/* ---------- panel de superadmin ---------- */
+const SKILL_SHORT = ["LLM y límites","Prompts claros","Uso en el flujo diario","Verificación","Datos y seguridad"];
+function nameOf(p){ return p.fullName || (PROF[p.id]&&PROF[p.id].name) || "Sin nombre"; }
+function pct(p){ return Math.round(((p.done||[]).length)/STEPS.length*100); }
+function stateOf(p){ const n=(p.done||[]).length; return n===0?"No iniciado":n>=STEPS.length?"Completó":"En curso"; }
+function gain(p){
+  const ks = Object.keys(p.pre||{}).filter(k=>p.post && p.post[k]!==undefined);
+  return ks.length ? ks.reduce((a,k)=>a+(p.post[k]-p.pre[k]),0)/ks.length : null;
+}
+function fmtDate(ms){ try{ return new Date(ms).toLocaleString("es",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } }
+function filtered(){
+  const q = (V.q||"").trim().toLowerCase();
+  return PART.filter(p=>{
+    if(q && !(nameOf(p).toLowerCase().includes(q) || (p.area||"").toLowerCase().includes(q))) return false;
+    if(V.area && (p.area||"")!==V.area) return false;
+    if(V.state && stateOf(p)!==V.state) return false;
+    return true;
+  }).sort((a,b)=>(b.lastActivity||0)-(a.lastActivity||0));
+}
+function renderPanel(){
+  byId("main").innerHTML = `
+    <div class="kicker">Seguimiento</div>
+    <h1>Panel de superadmin</h1>
+    <p class="lead">Aquí ves el avance de las personas registradas. Solo los superadmins pueden ver esta vista.</p>
+    ${CLOUD.partErr?`<div class="fb no" role="alert">No se pudieron cargar los participantes (${esc(CLOUD.partErr)}).</div>`:""}
+    <div class="stats4" id="pstats"></div>
+    <div class="block"><h3>Avance por módulo</h3><div id="pbars"></div></div>
+    <div class="block"><h3>Autoevaluación promedio</h3><p class="hint">Barra gris: antes. Barra de color: ahora. Escala de 1 a 5.</p><div id="pskills"></div></div>
+    <div class="block"><h3>Participantes</h3>
+      <div class="filters">
+        <input type="text" data-psearch placeholder="Buscar por nombre o área" aria-label="Buscar" value="${esc(V.q)}">
+        <select id="parea" data-parea aria-label="Filtrar por área"></select>
+        <select data-pstate aria-label="Filtrar por estado">${["","No iniciado","En curso","Completó"].map(o=>`<option value="${o}" ${V.state===o?"selected":""}>${o||"Todos los estados"}</option>`).join("")}</select>
+        <button class="btn small" data-a="csv">Exportar CSV</button>
+      </div>
+      <div class="scroll" id="ptable"></div>
+      <div id="pdetail"></div>
+    </div>
+    <div class="block"><h3>Gestión de accesos</h3>
+      <div class="card"><ul class="clist">
+        <li><b>Participantes:</b> se registran con su nombre y área. Reciben un código de acceso personal (en «Mi registro») para continuar desde otro dispositivo.</li>
+        <li><b>Superadmin:</b> entra con la contraseña definida en el servidor (variable ADMIN_PASSWORD). Puedes cambiarla desde Railway cuando quieras.</li>
+        <li><b>Privacidad:</b> aquí solo se ve el avance resumido. Los prompts, notas y planes de cada persona no se muestran.</li>
+      </ul></div>
+    </div>`;
+  fillPanel();
+}
+function fillPanel(){
+  if(!byId("ptable")) return;
+  const all = PART, n = all.length;
+  const avgPct = n ? Math.round(all.reduce((a,p)=>a+pct(p),0)/n) : 0;
+  const comp = all.filter(p=>stateOf(p)==="Completó").length;
+  const gs = all.map(gain).filter(x=>x!==null);
+  const g = gs.length ? gs.reduce((a,b)=>a+b,0)/gs.length : null;
+  byId("pstats").innerHTML =
+    `<div><b>${n}</b><span>personas registradas</span></div><div><b>${avgPct}%</b><span>avance promedio</span></div><div><b>${comp}</b><span>completaron la ruta</span></div><div><b>${g===null?"—":(g>0?"+":"")+g.toFixed(1)}</b><span>mejora en autoevaluación</span></div>`;
+  byId("pbars").innerHTML = n ? STEPS.map(st=>{
+    const c = all.filter(p=>(p.done||[]).includes(st.id)).length;
+    return `<div class="hbar"><span>${esc(st.nav)}</span><div class="track"><i style="width:${Math.round(c/n*100)}%"></i></div><span>${c} de ${n}</span></div>`;
+  }).join("") : `<p class="hint">Aún no hay personas registradas.</p>`;
+  byId("pskills").innerHTML = n ? SKILLS.map((_,i)=>{
+    const pre = all.map(p=>(p.pre||{})[i]).filter(x=>typeof x==="number"), post = all.map(p=>(p.post||{})[i]).filter(x=>typeof x==="number");
+    const a = pre.length ? pre.reduce((x,y)=>x+y,0)/pre.length : 0, b = post.length ? post.reduce((x,y)=>x+y,0)/post.length : 0;
+    return `<div class="hbar two"><span>${esc(SKILL_SHORT[i])}</span><div class="track"><i class="pre" style="width:${a/5*100}%"></i><i style="width:${b/5*100}%"></i></div><span>${pre.length?a.toFixed(1):"—"} → ${post.length?b.toFixed(1):"—"}</span></div>`;
+  }).join("") : "";
+  const areas = [...new Set(all.map(p=>p.area).filter(Boolean))].sort();
+  byId("parea").innerHTML = `<option value="">Todas las áreas</option>` + areas.map(a=>`<option value="${esc(a)}" ${V.area===a?"selected":""}>${esc(a)}</option>`).join("");
+  const rows = filtered();
+  const stCls = {"Completó":"done","En curso":"prog","No iniciado":"none"};
+  byId("ptable").innerHTML = !CLOUD.partReady ? `<p class="hint">Cargando participantes…</p>` : rows.length ? `<table class="cmpt ptab"><thead><tr><th>Participante</th><th>Área</th><th>Cargo</th><th>Avance</th><th>Estado</th><th>Última actividad</th><th></th></tr></thead><tbody>${
+    rows.map(p=>{
+      const av = PROF[p.id] && PROF[p.id].avatarUrl;
+      return `<tr><td><span class="pn2">${av?`<img class="av" alt="" src="${esc(av)}">`:""}${esc(nameOf(p))}</span></td><td>${esc(p.area||"—")}</td><td>${esc(p.cargo||"—")}</td><td><span class="mini"><i style="width:${pct(p)}%"></i></span><span class="hint">${(p.done||[]).length}/${STEPS.length}</span></td><td><span class="st ${stCls[stateOf(p)]}">${stateOf(p)}</span></td><td>${p.lastActivity?fmtDate(p.lastActivity):"—"}</td><td><button class="btn small ghost" data-a="psel" data-id="${esc(p.id)}">Ver</button></td></tr>`;
+    }).join("")}</tbody></table>` : `<p class="hint">${n?"Ninguna persona coincide con los filtros.":"Aún no hay personas registradas. Comparte el enlace con tus participantes."}</p>`;
+  byId("pdetail").innerHTML = detailHtml();
+}
+function detailHtml(){
+  const p = PART.find(x=>x.id===V.sel); if(!p) return "";
+  const sc = p.scores||{}, done = p.done||[];
+  const confirming = V.delId===p.id;
+  return `<div class="fig" style="margin-top:16px">
+    <div class="row" style="justify-content:space-between"><h3 style="margin:0">${esc(nameOf(p))}</h3><button class="btn small ghost" data-a="pclose">Cerrar</button></div>
+    <p class="hint" style="margin:6px 0 12px">${esc(p.area||"Sin área")} · ${esc(p.cargo||"Sin cargo")} · Experiencia con IA: ${esc(p.nivel||"—")}<br>Registrado: ${p.registeredAt?fmtDate(p.registeredAt):"—"} · Última actividad: ${p.lastActivity?fmtDate(p.lastActivity):"—"}</p>
+    <div class="two">
+      <div class="card"><h4>Módulos</h4><ul class="clist">${STEPS.map(st=>`<li>${done.includes(st.id)?"✓":"·"} ${esc(st.nav)}</li>`).join("")}</ul></div>
+      <div class="card"><h4>Resultados</h4><ul class="clist">
+        <li>Mitos y verdades: ${sc.mythsC||0} de ${sc.mythsT||0} respondidos</li>
+        <li>Datos que se pueden compartir: ${sc.privC||0} de ${sc.privT||0}</li>
+        <li>Preguntas de comprobación: ${sc.quizC||0} de ${sc.quizT||0}</li>
+        <li>Rúbrica del reto: ${sc.rub||0} de ${RUBRIC.length}</li></ul></div>
+    </div>
+    <div class="scroll" style="margin-top:12px"><table class="cmpt"><thead><tr><th>Habilidad</th><th>Antes</th><th>Ahora</th></tr></thead><tbody>${SKILLS.map((x,i)=>`<tr><td>${esc(x)}</td><td>${(p.pre||{})[i]||"—"}</td><td>${(p.post||{})[i]||"—"}</td></tr>`).join("")}</tbody></table></div>
+    <div style="margin-top:14px">${confirming
+      ? `<div class="fb no" role="status"><b>¿Eliminar este registro del panel?</b> Se borrarán su registro y todo su progreso de forma permanente.</div><div class="row" style="margin-top:8px"><button class="btn small" data-a="pdel" data-id="${esc(p.id)}">Sí, eliminar</button><button class="btn small ghost" data-a="pdelno">Cancelar</button></div>`
+      : `<button class="btn small ghost" data-a="pdelask" data-id="${esc(p.id)}">Eliminar registro</button>`}</div>
+    ${V.flash?`<p class="hint" role="status">${esc(V.flash)}</p>`:""}
+  </div>`;
+}
+async function deleteParticipant(id){
+  try{ await api("/admin/participants/"+encodeURIComponent(id), {method:"DELETE", admin:true}); PART = PART.filter(x=>x.id!==id); V.sel=null; V.delId=null; V.flash=""; }
+  catch(e){ if(e.code==="unauthorized"){ adminLogout(); return; } V.flash="No se pudo eliminar el registro. Intenta de nuevo."; }
+  fillPanel();
+}
+async function exportCsv(btn){
+  const head = ["Nombre","Área","Cargo","Experiencia con IA","Registrado","Última actividad","Módulos completados","Avance %","Estado","Autoevaluación antes","Autoevaluación ahora","Mejora","Mitos (aciertos)","Datos compartibles (aciertos)","Comprobaciones (aciertos)","Rúbrica del reto"];
+  const iso = ms => ms ? new Date(ms).toISOString().slice(0,16).replace("T"," ") : "";
+  const mean = o => { const v=Object.values(o||{}).filter(x=>typeof x==="number"); return v.length ? Math.round(v.reduce((a,b)=>a+b,0)/v.length*100)/100 : ""; };
+  const rows = PART.slice().sort((a,b)=>nameOf(a).localeCompare(nameOf(b))).map(p=>{
+    const sc = p.scores||{}, gn = gain(p);
+    return [nameOf(p),p.area||"",p.cargo||"",p.nivel||"",iso(p.registeredAt),iso(p.lastActivity),(p.done||[]).length,pct(p),stateOf(p),mean(p.pre),mean(p.post),gn===null?"":Math.round(gn*100)/100,sc.mythsC||0,sc.privC||0,sc.quizC||0,sc.rub||0];
+  });
+  const cell = v => { let t = String(v==null?"":v); if(typeof v!=="number" && /^[=+\-@]/.test(t)) t = "'"+t; return '"'+t.replace(/"/g,'""')+'"'; };
+  const csv = "\ufeff" + [head].concat(rows).map(r=>r.map(cell).join(",")).join("\r\n");
+  try{
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "avance-ruta-ia.csv";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+    flash(btn,"Listo");
+  }catch(e){ flash(btn,"No disponible"); }
+}
+
+/* ---------- eventos ---------- */
+function flash(btn, txt){ if(!btn) return; const o=btn.textContent; btn.textContent=txt; setTimeout(()=>{btn.textContent=o;},1400); }
+async function copyText(t, btn){
+  try{ await navigator.clipboard.writeText(t); }
+  catch(e){ const ta=document.createElement("textarea"); ta.value=t; ta.style.cssText="position:fixed;opacity:0"; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");}catch(_){} ta.remove(); }
+  flash(btn,"Copiado");
+}
+document.addEventListener("click", e=>{
+  const el = e.target.closest("[data-a]"); if(!el) return;
+  const a = el.dataset.a, i = el.dataset.i!==undefined?+el.dataset.i:null;
+  switch(a){
+    case "facil": S.facil=!S.facil; save(); render(true); return;
+    case "go": S.step=i; save(); render(false); return;
+    case "prev": if(S.step>0){S.step--; save(); render(false);} return;
+    case "next": S.done[STEPS[S.step].id]=true; if(S.step<STEPS.length-1) S.step++; save(); render(false); return;
+    case "finish": S.done[STEPS[S.step].id]=true; save(); render(true); return;
+    case "rate": S[el.dataset.t][i]=+el.dataset.v; save(); render(true); return;
+    case "myth": S.myths[i]=el.dataset.v==="true"; save(); render(true); return;
+    case "quiz": S.quiz[el.dataset.id]=+el.dataset.v; save(); render(true); return;
+    case "role": S.role=el.dataset.v; save(); render(true); return;
+    case "chk": S.chk[i]=el.checked; save(); return;
+    case "rubric": S.rubric[i]=el.checked; save(); render(true); return;
+    case "spottab": S.spotTab=el.dataset.v; save(); render(true); return;
+    case "spot": { const arr=S.spot[S.spotTab]; const k=arr.indexOf(i); if(k>-1) arr.splice(k,1); else arr.push(i); save(); render(true); return; }
+    case "spotcheck": S.spotDone[S.spotTab]=true; save(); render(true); return;
+    case "spotreset": S.spot[S.spotTab]=[]; S.spotDone[S.spotTab]=false; save(); render(true); return;
+    case "priv": S.priv[i]=el.dataset.v; save(); render(true); return;
+    case "chall": S.chall=i; save(); render(true); return;
+    case "ntpgen": { const ph=NTP[S.ntp.i]; let r=Math.random()*100, acc=0, pick=0; for(let k=0;k<ph.c.length;k++){ acc+=ph.c[k].v; if(r<acc){pick=k;break;} } S.ntp.picks.push(pick); if(S.ntp.picks.length>50) S.ntp.picks.shift(); save(); render(true); return; }
+    case "ntpswap": S.ntp.i=(S.ntp.i+1)%NTP.length; S.ntp.picks=[]; save(); render(true); return;
+    case "ctx": S.ctx[el.dataset.k]=el.checked; save(); render(true); return;
+    case "node": S.node[el.dataset.g]=el.dataset.v; save(); render(true); return;
+    case "copy": copyText(el.dataset.t, el); return;
+    case "copyPrompt": { const p=buildPrompt(); if(p) copyText(p, el); else flash(el,"Completa un campo"); return; }
+    case "copySummary": copyText(summaryText(), el); return;
+    case "resetask": V.cr=true; render(true); return;
+    case "cancelreset": V.cr=false; render(true); return;
+    case "reset": { const reg=S.reg; S=defaults(); S.reg=reg; V.cr=false; save(); flushNow(); render(false); return; }
+    case "view": V.view=el.dataset.v; V.delId=null; if(V.view==="registro") initRegForm(); render(false); return;
+    case "regsave": saveReg(); return;
+    case "psel": V.sel=el.dataset.id; V.delId=null; V.flash=""; fillPanel(); return;
+    case "pclose": V.sel=null; V.delId=null; fillPanel(); return;
+    case "pdelask": V.delId=el.dataset.id; fillPanel(); return;
+    case "pdelno": V.delId=null; fillPanel(); return;
+    case "pdel": deleteParticipant(el.dataset.id); return;
+    case "csv": exportCsv(el); return;
+    case "adminlogin": adminLogin(); return;
+    case "logout": adminLogout(); return;
+    case "usecode": { const c = window.prompt("Pega tu código de acceso"); if(c && c.trim()) recoverWithCode(c.trim()); return; }
+  }
+});
+function onInput(e){
+  const t = e.target;
+  if(e.type==="change" && !(t.tagName==="SELECT" || t.type==="checkbox")) return;
+  if(t.dataset.field){
+    S.fields[t.dataset.field]=t.value; save();
+    const wrap = document.querySelector(`[data-wrap="${t.dataset.field}"]`); if(wrap) wrap.classList.toggle("filled", !!t.value.trim());
+    const p = buildPrompt(), n = FIELDS.filter(x=>(S.fields[x.k]||"").trim()).length;
+    const pv = document.getElementById("pv"); pv.innerHTML = pvHtml(); pv.classList.toggle("empty", !p);
+    document.getElementById("clar").innerHTML = clarHtml(n); document.getElementById("pvc").textContent = pvcText(n);
+  } else if(t.hasAttribute("data-task")){ S.task=t.value; save(); }
+  else if(t.hasAttribute("data-plan")){ S.plan=t.value; save(); }
+  else if(t.hasAttribute("data-tok")){
+    S.tok=t.value; save(); const st=tokStats(t.value);
+    document.getElementById("tk-c").textContent=st.c; document.getElementById("tk-w").textContent=st.w; document.getElementById("tk-t").textContent=st.t;
+  }
+  else if(t.hasAttribute("data-psearch")){ V.q=t.value; fillPanel(); }
+  else if(t.hasAttribute("data-parea")){ V.area=t.value; fillPanel(); }
+  else if(t.hasAttribute("data-pstate")){ V.state=t.value; fillPanel(); }
+  else if(t.dataset.reg){ if(!V.rf) initRegForm(); V.rf[t.dataset.reg] = t.type==="checkbox" ? t.checked : t.value; }
+}
+document.addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target && e.target.id==="adminpw"){ e.preventDefault(); adminLogin(); } });
+document.addEventListener("input", onInput);
+document.addEventListener("change", onInput);
+
+if(S.step<0||S.step>=STEPS.length) S.step=0;
+render(true);
+initCloud();
+</script>
+</body>
+</html>
